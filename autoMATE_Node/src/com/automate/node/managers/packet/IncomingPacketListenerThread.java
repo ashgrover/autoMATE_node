@@ -14,8 +14,16 @@ public class IncomingPacketListenerThread extends Thread {
 	private Socket socket;
 	private final Object socketLock = new Object();
 
-	private IncomingPacketListenerThread() {
+	public IncomingPacketListenerThread(ExecutorService threadpool) {
 		super("PackageReceiveThread");
+		this.threadpool = threadpool;
+	}
+
+	/**
+	 * @param manager the manager to set
+	 */
+	public void setManager(IPacketManager manager) {
+		this.manager = manager;
 	}
 
 	public void setSocket(Socket socket) {

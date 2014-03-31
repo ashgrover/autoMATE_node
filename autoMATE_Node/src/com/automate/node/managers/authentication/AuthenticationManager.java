@@ -35,7 +35,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	private long nodeId;
 	private String password;
 	
-	private AuthenticationManager(IMessageManager messageManager, IConnectionManager connectionManager) {
+	public AuthenticationManager(IMessageManager messageManager, IConnectionManager connectionManager) {
 		super(AuthenticationListener.class);
 		this.messageManager = messageManager;
 		this.connectionManager = connectionManager;

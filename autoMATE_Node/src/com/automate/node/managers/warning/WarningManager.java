@@ -22,7 +22,7 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	
 	private ConnectedState state;
 	
-	private WarningManager(IMessageManager messageManager, IConnectionManager connectionManager) {
+	public WarningManager(IMessageManager messageManager, IConnectionManager connectionManager) {
 		super(WarningListener.class);
 		this.messageManager = messageManager;
 		this.connectionManager = connectionManager;
