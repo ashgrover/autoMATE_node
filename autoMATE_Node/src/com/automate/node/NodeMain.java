@@ -19,10 +19,14 @@ public class NodeMain {
 		try {
 			configurationProperties.load(new FileReader(args[0]));
 			node = new AutoMateNode(configurationProperties);
+			node.start();
 		} catch (FileNotFoundException e) {
 			System.err.print("Failed to initialize node - properties file not found");
 		} catch (IOException e) {
 			System.err.print("Failed to initialize node - properties file could not be read");
+		} catch (InitializationException e) {
+			System.err.print("Failed to initialize node.");
+			e.printStackTrace();
 		}
 		BufferedReader commandLineReader = new BufferedReader(new InputStreamReader(System.in));
 		while(true) {
@@ -38,7 +42,7 @@ public class NodeMain {
 	}
 	
 	static void showUsage() {
-		System.out.println("Usage:java -jar AutoMateNode.jar properties file");
+		System.out.println("Usage:java -jar AutoMateNode.jar <properties file>");
 		System.exit(1);
 	}
 	
