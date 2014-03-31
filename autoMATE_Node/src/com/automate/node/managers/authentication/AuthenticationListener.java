@@ -10,6 +10,4 @@ public interface AuthenticationListener extends IListener {
 	
 	public void onAuthenticated(long nodeId, String password);
 	
-	public void onLoggedOut();
-	
 }

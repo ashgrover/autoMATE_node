@@ -35,11 +35,13 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	private long nodeId;
 	private String password;
 	
-	public AuthenticationManager(IMessageManager messageManager, IConnectionManager connectionManager) {
+	public AuthenticationManager(IMessageManager messageManager, IConnectionManager connectionManager, long nodeId, String password) {
 		super(AuthenticationListener.class);
 		this.messageManager = messageManager;
 		this.connectionManager = connectionManager;
 		this.messageHandler = new AuthenticationMessageHandler(this);
+		this.nodeId = nodeId;
+		this.password = password;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,8 +116,6 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	@Override
 	public void onAuthenticationFailure(long nodeId, String password) {
 		this.state = AuthenticatedState.NOT_AUTHENTICATED;
-		this.nodeId = -1;
-		this.password = null;
 		for(AuthenticationListener listener : mListeners) {
 			try {
 				listener.onAuthenticationFailure(nodeId, password);
@@ -139,25 +139,6 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 			}
 		}
 	}
-
-	@Override
-	public void onLoggedOut() {
-		this.state = AuthenticatedState.NOT_AUTHENTICATED;
-		this.nodeId = -1;
-		this.password = null;
-		this.reconnect = false;
-		for(AuthenticationListener listener : mListeners) {
-			try {
-				listener.onLoggedOut();
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener.");
-				e.printStackTrace();
-			}
-		}
-		if(connectionManager != null) {
-			this.connectionManager.disconnect();
-		}
-	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IListener
@@ -170,7 +151,8 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	@Override
 	public void onUnbind(Class<? extends IListener> listenerClass) {
 		if(listenerClass.equals(ConnectionListener.class)) {
-			signOut();
+			this.reconnect = false;
+			onDisconnected();
 		}
 	}
 
@@ -183,12 +165,6 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 		ClientAuthenticationMessage message = new ClientAuthenticationMessage(messageManager.getProtocolParameters(), String.valueOf(nodeId), password);
 		this.reconnect = true;
 		messageManager.sendMessage(message);
-		return true;
-	}
-
-	@Override
-	public boolean signOut() {
-		onLoggedOut();
 		return true;
 	}
 
@@ -219,6 +195,9 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	protected void setupInitialState() {
 		this.timer = new Timer("Reconnect timer");
 		this.state = AuthenticatedState.NOT_AUTHENTICATED;
+		if(password != null) {
+			signIn(nodeId, password);
+		}
 	}
 
 	@Override

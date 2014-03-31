@@ -1,5 +1,8 @@
 package com.automate.node;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -99,7 +102,20 @@ public class AutoMateNode {
 	}
 
 	private IAuthenticationManager createAuthenticationManager() {
-		return new AuthenticationManager(managers.messageManager, managers.connectionManager);
+		long nodeId = -1;
+		String password = null;
+		File credentialsFile = new File("resources/credentials.properties");
+		if(credentialsFile.exists()) {
+			Properties credentials = new Properties();
+			try {
+				credentials.load(new FileInputStream(credentialsFile));
+				nodeId = Long.parseLong(credentials.getProperty("credentials.nodeId"));
+				password = credentials.getProperty("credentials.password");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return new AuthenticationManager(managers.messageManager, managers.connectionManager, nodeId, password);
 	}
 
 	private IMessageManager createMessageManager() {

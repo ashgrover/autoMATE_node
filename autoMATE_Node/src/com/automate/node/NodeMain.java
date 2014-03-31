@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Properties;
 
-import javax.swing.InputMap;
-
 public class NodeMain {
 
 	private static AutoMateNode node;

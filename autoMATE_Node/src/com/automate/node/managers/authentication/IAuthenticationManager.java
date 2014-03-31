@@ -6,8 +6,6 @@ import com.automate.node.managers.message.MessageListener;
 
 public interface IAuthenticationManager extends IManager<AuthenticationListener>, MessageListener, ConnectionListener, AuthenticationListener {
 
-	public boolean signOut();
-
 	public void reconnect();
 
 	boolean signIn(long nodeId, String password);
