@@ -1,13 +1,13 @@
 package com.automate.node.managers.warning;
 
-import java.util.Set;
+import java.util.ArrayList;
 
 import com.automate.node.managers.IListener;
 import com.automate.node.managers.ManagerBase;
-import com.automate.node.managers.authentication.AuthenticationListener;
+import com.automate.node.managers.connection.ConnectionManager.ConnectedState;
+import com.automate.node.managers.connection.ConnectionListener;
 import com.automate.node.managers.connection.IConnectionManager;
 import com.automate.node.managers.message.IMessageManager;
-import com.automate.node.managers.message.MessageManager;
 import com.automate.protocol.Message;
 import com.automate.protocol.client.ClientProtocolParameters;
 import com.automate.protocol.node.messages.NodeWarningMessage;
@@ -17,7 +17,10 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 
 	private IMessageManager messageManager;
 	private IConnectionManager connectionManager;
+
+	private ArrayList<String> warningQueue = new ArrayList<String>();
 	
+	private ConnectedState state;
 	
 	private WarningManager(IMessageManager messageManager, IConnectionManager connectionManager) {
 		super(WarningListener.class);
@@ -34,7 +37,6 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 		if(message instanceof NodeWarningMessage){
 			onWarningEmitted(((NodeWarningMessage)message).message);
 		}
-		
 	}
 
 	@Override
@@ -42,7 +44,6 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 		if(message instanceof NodeWarningMessage){
 			emitWarning(((NodeWarningMessage)message).message);
 		}
-		
 	}
 
 	@Override
@@ -56,21 +57,20 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	@Override
-	public void onConnecting() {
-		// TODO Auto-generated method stub
-
-	}
+	public void onConnecting() {}
 
 	@Override
 	public void onConnected(String sessionKey) {
-		// TODO Auto-generated method stub
-
+		this.state = ConnectedState.CONNECTED;
+		while(!warningQueue.isEmpty()) {
+			String warning = warningQueue.remove(0);
+			emitWarning(warning);
+		}
 	}
 
 	@Override
 	public void onDisconnected() {
-		// TODO Auto-generated method stub
-
+		this.state = ConnectedState.DISCONNECTED;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,8 +102,9 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 
 	@Override
 	public void onUnbind(Class<? extends IListener> listenerClass) {
-		// TODO Auto-generated method stub
-
+		if(listenerClass.equals(ConnectionListener.class)) {
+			this.onDisconnected();
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,10 +113,12 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	
 	@Override
 	public void emitWarning(String warning) {
-		// TODO Auto-generated method stub
-		NodeWarningMessage mWarning;
-		mWarning = new NodeWarningMessage(messageManager.getProtocolParameters(),0,warning);
-		messageManager.sendMessage(mWarning);
+		if(state == ConnectedState.DISCONNECTED) {
+			this.warningQueue.add(warning);
+		} else {
+			NodeWarningMessage mWarning = new NodeWarningMessage(messageManager.getProtocolParameters(),0,warning);
+			messageManager.sendMessage(mWarning);
+		}
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -139,14 +142,12 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 
 	@Override
 	protected void setupInitialState() {
-		// TODO Auto-generated method stub
-
+		this.state = ConnectedState.DISCONNECTED;
 	}
 
 	@Override
 	protected void teardown() {
-		// TODO Auto-generated method stub
-
+		this.warningQueue.clear();
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,8 +156,7 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	
 	@Override
 	protected void performInitialUpdate(WarningListener listener) {
-		// TODO Auto-generated method stub
-	
+		
 	}
 
 }
