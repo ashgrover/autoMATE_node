@@ -33,7 +33,7 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	@Override
-	public void onMessageSet(Message<ClientProtocolParameters> message) {
+	public void onMessageSent(Message<ClientProtocolParameters> message) {
 		if(message instanceof NodeWarningMessage){
 			onWarningEmitted(((NodeWarningMessage)message).message);
 		}

@@ -71,7 +71,7 @@ IMessageManager {
 	public void onPacketSent(int packetId) {
 		Message<ClientProtocolParameters> message = messageHistory.remove(packetId);
 		if(message != null) {
-			onMessageSet(message);
+			onMessageSent(message);
 		}
 	}
 
@@ -129,11 +129,11 @@ IMessageManager {
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@Override
-	public void onMessageSet(Message<ClientProtocolParameters> message) {
+	public void onMessageSent(Message<ClientProtocolParameters> message) {
 		synchronized (mListeners) {
 			for(MessageListener listener: mListeners){
 				try {
-					listener.onMessageSet(message);
+					listener.onMessageSent(message);
 				} catch (RuntimeException e) {
 					System.out.println("Error notifying listener.");
 					e.printStackTrace();

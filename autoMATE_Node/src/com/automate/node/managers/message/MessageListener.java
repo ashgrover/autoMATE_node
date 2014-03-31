@@ -7,7 +7,7 @@ import com.automate.protocol.server.ServerProtocolParameters;
 
 public interface MessageListener extends IListener {
 
-	public void onMessageSet(Message<ClientProtocolParameters> message);
+	public void onMessageSent(Message<ClientProtocolParameters> message);
 	
 	public void onMessageNotSent(Message<ClientProtocolParameters> message);
 	

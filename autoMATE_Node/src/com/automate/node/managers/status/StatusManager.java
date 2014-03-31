@@ -23,7 +23,7 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 	private int nodeId;
 	private ClientProtocolParameters cpp;
 	
-	private StatusManager(IMessageManager messageManager, IConnectionManager connectionManager) {
+	public StatusManager(IMessageManager messageManager, IConnectionManager connectionManager) {
 		super(StatusListener.class);
 		this.messageManager = messageManager;
 		this.connectionManager = connectionManager;
@@ -38,7 +38,7 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	@Override
-	public void onMessageSet(Message<ClientProtocolParameters> message) {
+	public void onMessageSent(Message<ClientProtocolParameters> message) {
 		// TODO Auto-generated method stub
 
 	}

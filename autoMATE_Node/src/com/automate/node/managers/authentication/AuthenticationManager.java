@@ -49,7 +49,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	@Override
-	public void onMessageSet(Message<ClientProtocolParameters> message) {
+	public void onMessageSent(Message<ClientProtocolParameters> message) {
 		if(message instanceof ClientAuthenticationMessage) {
 			this.onAuthenticating(Long.parseLong(((ClientAuthenticationMessage) message).username), ((ClientAuthenticationMessage) message).password);
 		}

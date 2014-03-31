@@ -16,7 +16,7 @@ public class CommandManager extends ManagerBase<CommandListener> implements ICom
 	private IMessageManager messageManager;
 	private IConnectionManager connectionManager;
 	
-	private CommandManager(IMessageManager messageManager, IConnectionManager connectionManager) {
+	public CommandManager(IMessageManager messageManager, IConnectionManager connectionManager) {
 		super(CommandListener.class);
 		this.messageManager = messageManager;
 		this.connectionManager = connectionManager;
@@ -27,7 +27,7 @@ public class CommandManager extends ManagerBase<CommandListener> implements ICom
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	@Override
-	public void onMessageSet(Message<ClientProtocolParameters> message) {
+	public void onMessageSent(Message<ClientProtocolParameters> message) {
 		// TODO Auto-generated method stub
 
 	}
