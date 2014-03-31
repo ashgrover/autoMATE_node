@@ -1,4 +1,4 @@
-package com.automate.node.status;
+package com.automate.node.status.deprecated;
 
 import java.util.List;
 

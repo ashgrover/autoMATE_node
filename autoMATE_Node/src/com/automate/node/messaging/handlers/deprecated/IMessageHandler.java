@@ -1,4 +1,4 @@
-package com.automate.node.messaging.handlers;
+package com.automate.node.messaging.handlers.deprecated;
 
 import com.automate.protocol.Message;
 import com.automate.protocol.server.ServerProtocolParameters;

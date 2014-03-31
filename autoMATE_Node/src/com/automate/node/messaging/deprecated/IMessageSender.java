@@ -1,4 +1,4 @@
-package com.automate.node.messaging;
+package com.automate.node.messaging.deprecated;
 
 import com.automate.protocol.node.messages.NodeCommandMessage;
 import com.automate.protocol.node.messages.NodeStatusUpdateMessage;
