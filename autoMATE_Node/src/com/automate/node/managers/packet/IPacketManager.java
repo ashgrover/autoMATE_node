@@ -6,7 +6,7 @@ import com.automate.node.managers.IManager;
 
 public interface IPacketManager extends IManager<PacketListener>, PacketListener {
 
-	public long sendPacket(String packet);
+	public int sendPacket(String packet);
 	
 	public void setReceiveSocket(Socket receiveSocket);
 	

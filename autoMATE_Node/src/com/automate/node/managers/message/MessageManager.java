@@ -1,179 +1,222 @@
 package com.automate.node.managers.message;
 
+import java.io.IOException;
+import java.util.HashMap;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
+
 import com.automate.node.managers.IListener;
 import com.automate.node.managers.ManagerBase;
+import com.automate.node.managers.connection.ConnectionListener;
 import com.automate.node.managers.connection.IConnectionManager;
 import com.automate.node.managers.packet.IPacketManager;
+import com.automate.protocol.IncomingMessageParser;
 import com.automate.protocol.Message;
+import com.automate.protocol.MessageFormatException;
 import com.automate.protocol.client.ClientProtocolParameters;
 import com.automate.protocol.server.ServerProtocolParameters;
+import com.automate.util.xml.XmlFormatException;
 
 public class MessageManager extends ManagerBase<MessageListener> implements
-		IMessageManager {
+IMessageManager {
 
 	private IPacketManager packetManager;
 	private IConnectionManager connectionManager;
-	
-	public MessageManager(IPacketManager packetManager, IConnectionManager connectionManager) {
+	private IncomingMessageParser<ServerProtocolParameters> incomingMessageParser;
+	private HashMap<Integer, Message<ClientProtocolParameters>> messageHistory = new HashMap<Integer, Message<ClientProtocolParameters>>();
+	private String sessionKey;
+	private int majorVersion;
+	private int minorVersion;
+
+	public MessageManager(IPacketManager packetManager, IConnectionManager connectionManager, 
+			IncomingMessageParser<ServerProtocolParameters> incomingMessageParser, int majorVersion, int minorVersion) {
 		super(MessageListener.class);
 		this.packetManager = packetManager;
 		this.connectionManager = connectionManager;
+		this.incomingMessageParser = incomingMessageParser;
+		this.majorVersion = majorVersion;
+		this.minorVersion = minorVersion;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from PacketListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onPacketReceived(String packet) {
-		// TODO Auto-generated method stub
-
+		try {
+			Message<ServerProtocolParameters> message = incomingMessageParser.parse(packet);
+			onMessageReceived(message);
+		} catch (XmlFormatException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (MessageFormatException e) {
+			e.printStackTrace();
+		} catch (SAXException e) {
+			e.printStackTrace();
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		}
 	}
 
-	@Override
-	public void onEmptyPacketReceived() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onReceiveIoException() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onNoSocketProvided() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onReceiveError() {
-		// TODO Auto-generated method stub
-
-	}
+	public void onEmptyPacketReceived() {}
+	public void onReceiveIoException() {}
+	public void onNoSocketProvided() {}
+	public void onReceiveError() {}
 
 	@Override
 	public void onPacketSent(int packetId) {
-		// TODO Auto-generated method stub
-
+		Message<ClientProtocolParameters> message = messageHistory.remove(packetId);
+		if(message != null) {
+			onMessageSet(message);
+		}
 	}
 
 	@Override
 	public void onSendIoException(int packetId) {
-		// TODO Auto-generated method stub
-
+		Message<ClientProtocolParameters> message = messageHistory.remove(packetId);
+		if(message != null) {
+			onMessageNotSent(message);
+		}
 	}
 
 	@Override
 	public void onSendNoServerAddress(int packetId) {
-		// TODO Auto-generated method stub
-
+		Message<ClientProtocolParameters> message = messageHistory.remove(packetId);
+		if(message != null) {
+			onMessageNotSent(message);
+		}
 	}
 
 	@Override
 	public void onSendNoServerPort(int packetId) {
-		// TODO Auto-generated method stub
-
+		Message<ClientProtocolParameters> message = messageHistory.remove(packetId);
+		if(message != null) {
+			onMessageNotSent(message);
+		}
 	}
 
 	@Override
 	public void onSendError(int packetId) {
-		// TODO Auto-generated method stub
-
+		Message<ClientProtocolParameters> message = messageHistory.remove(packetId);
+		if(message != null) {
+			onMessageNotSent(message);
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ConnectionListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	@Override
-	public void onConnecting() {
-		// TODO Auto-generated method stub
 
-	}
+	public void onConnecting() {}
 
 	@Override
 	public void onConnected(String sessionKey) {
-		// TODO Auto-generated method stub
-
+		this.sessionKey = sessionKey;
 	}
 
 	@Override
 	public void onDisconnected() {
-		// TODO Auto-generated method stub
+		this.sessionKey = null;
 		packetManager.setReceiveSocket(null);
-
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from MessageListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onMessageSet(Message<ClientProtocolParameters> message) {
-		// TODO Auto-generated method stub
+		synchronized (mListeners) {
 			for(MessageListener listener: mListeners){
-				listener.onMessageSet(message);
+				try {
+					listener.onMessageSet(message);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener.");
+					e.printStackTrace();
+				}
 			}
+		}
 	}
 
 	@Override
 	public void onMessageNotSent(Message<ClientProtocolParameters> message) {
-		this.sendMessage(message);
-
+		synchronized (mListeners) {
+			for(MessageListener listener: mListeners){
+				try {
+					listener.onMessageNotSent(message);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener.");
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	@Override
 	public void onMessageReceived(Message<ServerProtocolParameters> message) {
-		// TODO Auto-generated method stub
-
+		synchronized (mListeners) {
+			for(MessageListener listener: mListeners){
+				try {
+					listener.onMessageReceived(message);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener.");
+					e.printStackTrace();
+				}
+			}
+		}
 	}
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
-	public void onBind(Class<? extends IListener> listenerClass) {
-		// TODO Auto-generated method stub
-		
-	}
-	
+	public void onBind(Class<? extends IListener> listenerClass) {}
+
 	@Override
 	public void onUnbind(Class<? extends IListener> listenerClass) {
-		// TODO Auto-generated method stub
-		
+		if(listenerClass.equals(ConnectionListener.class)) {
+			onDisconnected();
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IMessageManager
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void sendMessage(Message<ClientProtocolParameters> message) {
-		// TODO Auto-generated method stub
-
+		if(sessionKey == null) {
+			onMessageNotSent(message);
+			return;
+		}
+		StringBuilder xmlBuilder = new StringBuilder();
+		try {
+			message.toXml(xmlBuilder, 0);
+			messageHistory.put(packetManager.sendPacket(xmlBuilder.toString()), message);
+		} catch (Exception e) {
+			onMessageNotSent(message);
+		}
 	}
 
 	@Override
-	public void sendMessage(Message<ClientProtocolParameters> message,
-			MessageListener listener) {
-		// TODO Auto-generated method stub
-
+	public void sendMessage(Message<ClientProtocolParameters> message, MessageListener listener) {
+		throw new UnsupportedOperationException("Implement this when it is needed.");
 	}
 
 	@Override
 	public ClientProtocolParameters getProtocolParameters() {
-		// TODO Auto-generated method stub
-		return null;
+		return new ClientProtocolParameters(majorVersion, minorVersion, sessionKey);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ManagerBase
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	protected void unbindSelf() {
 		this.connectionManager.unbind(this);
@@ -190,24 +233,19 @@ public class MessageManager extends ManagerBase<MessageListener> implements
 
 	@Override
 	protected void setupInitialState() {
-		// TODO Auto-generated method stub
-
+		this.sessionKey = null;
 	}
 
 	@Override
 	protected void teardown() {
-		// TODO Auto-generated method stub
-
+		this.messageHistory.clear();
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ListenerBinder
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	@Override
-	protected void performInitialUpdate(MessageListener listener) {
-		// TODO Auto-generated method stub
 
-	}
+	@Override
+	protected void performInitialUpdate(MessageListener listener) {}
 
 }

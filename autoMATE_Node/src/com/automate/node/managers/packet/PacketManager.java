@@ -170,7 +170,7 @@ IPacketManager {
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@Override
-	public long sendPacket(String packet) {
+	public int sendPacket(String packet) {
 		int packetId;
 		synchronized (packetIdLock) {
 			packetId = nextPacketId++;
