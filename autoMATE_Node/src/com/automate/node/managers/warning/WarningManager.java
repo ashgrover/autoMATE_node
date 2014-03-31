@@ -1,18 +1,23 @@
 package com.automate.node.managers.warning;
 
+import java.util.Set;
+
 import com.automate.node.managers.IListener;
 import com.automate.node.managers.ManagerBase;
 import com.automate.node.managers.authentication.AuthenticationListener;
 import com.automate.node.managers.connection.IConnectionManager;
 import com.automate.node.managers.message.IMessageManager;
+import com.automate.node.managers.message.MessageManager;
 import com.automate.protocol.Message;
 import com.automate.protocol.client.ClientProtocolParameters;
+import com.automate.protocol.node.messages.NodeWarningMessage;
 import com.automate.protocol.server.ServerProtocolParameters;
 
 public class WarningManager extends ManagerBase<WarningListener> implements IWarningManager {
 
 	private IMessageManager messageManager;
 	private IConnectionManager connectionManager;
+	
 	
 	private WarningManager(IMessageManager messageManager, IConnectionManager connectionManager) {
 		super(WarningListener.class);
@@ -26,14 +31,18 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	
 	@Override
 	public void onMessageSet(Message<ClientProtocolParameters> message) {
-		// TODO Auto-generated method stub
-
+		if(message instanceof NodeWarningMessage){
+			onWarningEmitted(((NodeWarningMessage)message).message);
+		}
+		
 	}
 
 	@Override
 	public void onMessageNotSent(Message<ClientProtocolParameters> message) {
-		// TODO Auto-generated method stub
-
+		if(message instanceof NodeWarningMessage){
+			emitWarning(((NodeWarningMessage)message).message);
+		}
+		
 	}
 
 	@Override
@@ -70,7 +79,14 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	
 	@Override
 	public void onWarningEmitted(String warning) {
-		// TODO Auto-generated method stub
+		for(WarningListener listener : mListeners){
+			try{
+				listener.onWarningEmitted(warning);
+			}
+			catch(RuntimeException e){
+				System.out.println(e.getStackTrace());
+			}
+		}
 
 	}
 
@@ -95,9 +111,11 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	@Override
-	public void emitWarning(String Warning) {
+	public void emitWarning(String warning) {
 		// TODO Auto-generated method stub
-
+		NodeWarningMessage mWarning;
+		mWarning = new NodeWarningMessage(messageManager.getProtocolParameters(),0,warning);
+		messageManager.sendMessage(mWarning);
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -107,13 +125,16 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	@Override
 	protected void unbindSelf() {
 		// TODO Auto-generated method stub
-
+		this.messageManager.unbind(this);
+		this.connectionManager.unbind(this);
+	
 	}
 
 	@Override
 	protected void bindSelf() {
 		// TODO Auto-generated method stub
-
+		this.messageManager.bind(this);
+		this.connectionManager.bind(this);
 	}
 
 	@Override
@@ -135,7 +156,7 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	@Override
 	protected void performInitialUpdate(WarningListener listener) {
 		// TODO Auto-generated method stub
-
+	
 	}
 
 }

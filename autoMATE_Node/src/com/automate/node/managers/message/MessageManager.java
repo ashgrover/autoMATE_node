@@ -103,6 +103,7 @@ public class MessageManager extends ManagerBase<MessageListener> implements
 	@Override
 	public void onDisconnected() {
 		// TODO Auto-generated method stub
+		packetManager.setReceiveSocket(null);
 
 	}
 
@@ -113,12 +114,14 @@ public class MessageManager extends ManagerBase<MessageListener> implements
 	@Override
 	public void onMessageSet(Message<ClientProtocolParameters> message) {
 		// TODO Auto-generated method stub
-
+			for(MessageListener listener: mListeners){
+				listener.onMessageSet(message);
+			}
 	}
 
 	@Override
 	public void onMessageNotSent(Message<ClientProtocolParameters> message) {
-		// TODO Auto-generated method stub
+		this.sendMessage(message);
 
 	}
 
@@ -173,13 +176,15 @@ public class MessageManager extends ManagerBase<MessageListener> implements
 	
 	@Override
 	protected void unbindSelf() {
-		// TODO Auto-generated method stub
+		this.connectionManager.unbind(this);
+		this.packetManager.unbind(this);
 
 	}
 
 	@Override
 	protected void bindSelf() {
-		// TODO Auto-generated method stub
+		this.packetManager.bind(this);
+		this.connectionManager.bind(this);
 
 	}
 

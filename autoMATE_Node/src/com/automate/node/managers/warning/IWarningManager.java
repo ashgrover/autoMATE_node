@@ -6,6 +6,6 @@ import com.automate.node.managers.message.MessageListener;
 
 public interface IWarningManager extends IManager<WarningListener>, MessageListener, ConnectionListener, WarningListener {
 
-	public void emitWarning(String Warning);
+	public void emitWarning(String warning);
 	
 }
