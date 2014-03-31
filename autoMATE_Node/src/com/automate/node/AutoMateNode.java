@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 
 import com.automate.node.managers.authentication.AuthenticationManager;
 import com.automate.node.managers.authentication.IAuthenticationManager;
+import com.automate.node.managers.command.CommandManager;
 import com.automate.node.managers.command.ICommandManager;
 import com.automate.node.managers.connection.ConnectionManager;
 import com.automate.node.managers.connection.IConnectionManager;
@@ -19,6 +20,7 @@ import com.automate.node.managers.packet.IPacketManager;
 import com.automate.node.managers.packet.IncomingPacketListenerThread;
 import com.automate.node.managers.packet.PacketManager;
 import com.automate.node.managers.status.IStatusManager;
+import com.automate.node.managers.status.StatusManager;
 import com.automate.node.managers.warning.IWarningManager;
 import com.automate.node.managers.warning.WarningManager;
 import com.automate.node.utilities.FanGpioUtility;
@@ -55,6 +57,7 @@ public class AutoMateNode {
 	public void stop() {
 		if(started) {
 			terminateSubsystems();
+			gpioUtility.setSpeedOff();
 			started = false;
 		} else {
 			throw new IllegalStateException("Node cannot be stopped twice.");
@@ -66,7 +69,8 @@ public class AutoMateNode {
 			this.managers = new Managers();
 
 			this.gpioUtility = new FanGpioUtility();
-
+			gpioUtility.setSpeedOff();
+			
 			managers.packetManager = createPacketManager();
 			managers.connectionManager = createConnectionManager();
 			managers.messageManager = createMessageManager();
@@ -92,13 +96,11 @@ public class AutoMateNode {
 	}
 
 	private IStatusManager createStatusManager() {
-		// TODO Auto-generated method stub
-		return null;
+		return new StatusManager(managers.messageManager, managers.connectionManager);
 	}
 
 	private ICommandManager createCommandManager() {
-		// TODO Auto-generated method stub
-		return null;
+		return new CommandManager(managers.messageManager, managers.connectionManager);
 	}
 
 	private IAuthenticationManager createAuthenticationManager() {
