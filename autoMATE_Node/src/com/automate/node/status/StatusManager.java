@@ -3,10 +3,11 @@ package com.automate.node.status;
 import java.util.List;
 
 import com.automate.protocol.models.Status;
+import com.automate.node.utilities.FanGpioUtility;
 
 public class StatusManager implements IStatusManager{
 
-	private GpioUtil gpioUtil;
+	private FanGpioUtility gpioUtil;
 	
 	@Override
 	public List<Status<?>> getDeviceStatuses() {
