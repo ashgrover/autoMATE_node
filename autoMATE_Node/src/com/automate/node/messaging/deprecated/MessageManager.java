@@ -3,7 +3,7 @@ package com.automate.node.messaging.deprecated;
 import java.util.HashMap;
 
 import com.automate.node.InitializationException;
-import com.automate.node.messaging.handlers.deprecated.IMessageHandler;
+import com.automate.node.managers.messagehandlers.IMessageHandler;
 import com.automate.node.status.deprecated.IStatusManager;
 import com.automate.protocol.Message;
 import com.automate.protocol.Message.MessageType;

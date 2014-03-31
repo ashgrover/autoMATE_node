@@ -1,5 +1,8 @@
 package com.automate.node.managers.connection;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import com.automate.node.managers.IListener;
 import com.automate.node.managers.ManagerBase;
 
@@ -13,6 +16,10 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 	
 	private ConnectedState connectedState;
 	
+	private Timer timer;
+
+	private String sessionKey;
+	
 	public ConnectionManager() {
 		super(ConnectionListener.class);
 	}
@@ -23,6 +30,7 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 	
 	@Override
 	public void onConnecting() {
+		this.connectedState = ConnectedState.CONNECTING;
 		for(ConnectionListener listener : mListeners) {
 			try {
 				listener.onConnecting();
@@ -35,6 +43,8 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 
 	@Override
 	public void onConnected(String sessionKey) {
+		this.connectedState = ConnectedState.CONNECTED;
+		this.sessionKey = sessionKey;
 		for(ConnectionListener listener : mListeners) {
 			try {
 				listener.onConnected(sessionKey);
@@ -47,6 +57,8 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 
 	@Override
 	public void onDisconnected() {
+		this.connectedState = ConnectedState.DISCONNECTED;
+		this.sessionKey = null;
 		for(ConnectionListener listener : mListeners) {
 			try {
 				listener.onDisconnected();
@@ -77,14 +89,17 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 	
 	@Override
 	public void scheduleDisconnect(long milis) {
-		// TODO Auto-generated method stub
-
+		timer.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				disconnect();
+			}
+		}, milis);
 	}
 
 	@Override
 	public void disconnect() {
-		// TODO Auto-generated method stub
-
+		this.onDisconnected();
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -103,14 +118,12 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 
 	@Override
 	protected void setupInitialState() {
-		// TODO Auto-generated method stub
-
+		timer = new Timer("Connection Timer");
 	}
 
 	@Override
 	protected void teardown() {
-		// TODO Auto-generated method stub
-
+		timer.cancel();
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,8 +132,22 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 	
 	@Override
 	protected void performInitialUpdate(ConnectionListener listener) {
-		// TODO Auto-generated method stub
+		switch (connectedState) {
+		case CONNECTED:
+			listener.onConnected(sessionKey);
+			break;
+			
+		case CONNECTING:
+			listener.onConnecting();
+			break;
+			
+		case DISCONNECTED:
+			listener.onDisconnected();
+			break;
 
+		default:
+			break;
+		}
 	}
 
 }
