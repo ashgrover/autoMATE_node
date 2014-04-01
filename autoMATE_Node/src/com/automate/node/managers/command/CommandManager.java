@@ -133,15 +133,16 @@ public class CommandManager extends ManagerBase<CommandListener> implements ICom
 		} else if (commandName.equalsIgnoreCase("set speed")) {
 			if(commandArgs.size() == 1) {
 				if(commandArgs.get(0).type == Type.STRING) {
+					@SuppressWarnings("unchecked")
 					CommandArgument<String> speedArgument = (CommandArgument<String>) commandArgs.get(0);
 					if(speedArgument.name.equalsIgnoreCase("speed")) {
-						if (commandArgs.get(0).value == "Low") {
+						if (commandArgs.get(0).value.equals("Low")) { // COMMENT: must use equals method.  "==" will compare object reference id
 							this.fanGpioUtility.setSpeedSlow();
 							return 200; // OK
-						} else if (commandArgs.get(0).value == "Medium") {
+						} else if (commandArgs.get(0).value.equals("Medium")) {
 							this.fanGpioUtility.setSpeedMedium();
 							return 200; // OK
-						} else if (commandArgs.get(0).value == "High") {
+						} else if (commandArgs.get(0).value.equals("High")) {
 							this.fanGpioUtility.setSpeedFast();
 							return 200; // OK
 						}
