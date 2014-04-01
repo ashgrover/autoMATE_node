@@ -1,5 +1,7 @@
 package com.automate.node.managers.packet;
 
+import java.net.Socket;
+
 import com.automate.node.managers.IListener;
 
 public interface PacketListener extends IListener {
@@ -14,7 +16,7 @@ public interface PacketListener extends IListener {
 
 	public void onReceiveError();
 
-	public void onPacketSent(int packetId);
+	public void onPacketSent(int packetId, Socket socket);
 
 	public void onSendIoException(int packetId);
 

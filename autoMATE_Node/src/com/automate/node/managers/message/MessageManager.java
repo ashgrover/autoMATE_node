@@ -1,6 +1,7 @@
 package com.automate.node.managers.message;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.util.HashMap;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -69,10 +70,13 @@ IMessageManager {
 	public void onReceiveError() {}
 
 	@Override
-	public void onPacketSent(int packetId) {
+	public void onPacketSent(int packetId, Socket socekt) {
 		Message<ClientProtocolParameters> message = messageHistory.remove(packetId);
 		if(message != null) {
 			onMessageSent(message);
+		}
+		if(sessionKey == null) {
+			packetManager.setReceiveSocket(socekt);
 		}
 	}
 

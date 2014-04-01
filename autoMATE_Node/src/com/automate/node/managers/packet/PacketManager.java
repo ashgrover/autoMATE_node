@@ -104,11 +104,11 @@ IPacketManager {
 	}
 
 	@Override
-	public void onPacketSent(int packetId) {
+	public void onPacketSent(int packetId, Socket socket) {
 		synchronized (mListeners) { 
 			for(PacketListener listener : mListeners) {
 				try {
-					listener.onPacketSent(packetId);
+					listener.onPacketSent(packetId, socket);
 				} catch (RuntimeException e) {
 					System.out.println("Error notifying listener");
 					e.printStackTrace();

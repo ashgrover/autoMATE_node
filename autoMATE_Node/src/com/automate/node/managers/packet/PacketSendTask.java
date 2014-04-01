@@ -31,9 +31,8 @@ public class PacketSendTask implements Runnable {
 			writer.print(packet);
 			writer.print('\0');
 			writer.flush();
-			socket.close();
 			System.out.println("Sent packet:\n" + packet);
-			packetManager.onPacketSent(packetId);
+			packetManager.onPacketSent(packetId, socket);
 		} catch(IOException e) {
 			packetManager.onSendIoException(packetId);
 		} catch(Exception e){
