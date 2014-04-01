@@ -54,29 +54,34 @@ public class IncomingPacketListenerThread extends Thread {
 					String line;
 					BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 					StringBuilder sb = new StringBuilder();
-					while(!(line = reader.readLine()).equals("\0")) {
+					while(true) {
+						line = reader.readLine();
+						if(line == null || line.equals("\0")) break;
 						sb.append(line);
 						sb.append('\n');
 					}
-					threadpool.submit(new HandleInputTask(manager, sb.toString()));
+					if(sb.length() > 0) {
+						threadpool.submit(new HandleInputTask(manager, sb.toString()));
+					}
 				}
 			} catch(IOException e) {
 				if(socket != null && !socket.isClosed()) {
 					try {
-						socket = null;
 						socket.close();
 					} catch (IOException e1) {
 						manager.onReceiveIoException();
 					}
+					socket = null;
 				}
 			} catch(Exception e) {
 				if(socket != null && !socket.isClosed()) {
 					try {
-						socket = null;
 						socket.close();
 					} catch (IOException e1) {
 						manager.onReceiveError();
 					}
+					socket = null;
+					e.printStackTrace();
 				}
 			}
 		}

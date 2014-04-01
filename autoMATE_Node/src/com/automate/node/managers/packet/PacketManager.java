@@ -21,6 +21,7 @@ IPacketManager {
 	public PacketManager(IncomingPacketListenerThread listenerThread, ExecutorService packetSendThreadpool, String serverAddress, int serverPort) {
 		super(PacketListener.class);
 		this.listenerThread = listenerThread;
+		this.listenerThread.setManager(this);
 		this.packetSendThreadpool = packetSendThreadpool;
 		this.serverAddress = serverAddress;
 		this.serverPort = serverPort;
@@ -33,7 +34,7 @@ IPacketManager {
 
 	@Override
 	public void onPacketReceived(String packet) {
-		System.out.println("\n------------------------------------------------------------"
+		System.out.println("\n------------------------------------------------------------\n"
 				+ "Packet Received:\n------------------------------------------------------------\n" + packet);
 		synchronized (mListeners) { 
 			for(PacketListener listener : mListeners) {
