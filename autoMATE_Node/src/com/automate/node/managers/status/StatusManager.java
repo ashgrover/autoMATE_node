@@ -21,7 +21,7 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 	private FanInterface fanGpioUtility;
 
 	private StatusUpdateMessageHandler messageHandler;
-	
+
 	public StatusManager(IMessageManager messageManager, FanInterface fanGpioUtility) {
 		super(StatusListener.class);
 		this.messageManager = messageManager;
@@ -32,14 +32,14 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from MessageListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onMessageSent(Message<ClientProtocolParameters> message) {
 		if(message instanceof NodeStatusUpdateMessage) {
 			this.onStatusUpdateSent(((NodeStatusUpdateMessage) message).statuses);
 		}
 	}
-	
+
 	public void onMessageNotSent(Message<ClientProtocolParameters> message) {}
 
 	@Override
@@ -59,7 +59,7 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from StatusListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onStatusUpdateRequested() {
 		/*
@@ -93,18 +93,18 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 			}
 		}
 	}
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	public void onBind(Class<? extends IListener> listenerClass) {}
 	public void onUnbind(Class<? extends IListener> listenerClass) {}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IStatusManager
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public List<Status<?>> getStatuses() {
 		/*
@@ -112,12 +112,18 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 		 */
 		int speed = fanGpioUtility.getFanSpeed();
 		List<Status<?>> statusList = new ArrayList<Status<?>>();
-		
+
 		if (speed == 0) {
 			statusList.add(Status.newStatus("Power On", Type.BOOLEAN, false));
 		} else {
 			statusList.add(Status.newStatus("Power On", Type.BOOLEAN, true));
-			Status.newStatus("Speed", Type.INTEGER, speed);
+			if(speed == 1) {
+				statusList.add(Status.newStatus("Speed", Type.STRING, "Low"));
+			} else if(speed == 2) {
+				statusList.add(Status.newStatus("Speed", Type.STRING, "Medium"));
+			} else if(speed == 3) {
+				statusList.add(Status.newStatus("Speed", Type.STRING, "High"));
+			} 
 		}
 		return statusList;
 	}
@@ -125,7 +131,7 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ManagerBase
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	protected void unbindSelf() {
 		/*
@@ -148,7 +154,7 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ListenerBinder
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	protected void performInitialUpdate(StatusListener listener) { /* no state */}
 
 }

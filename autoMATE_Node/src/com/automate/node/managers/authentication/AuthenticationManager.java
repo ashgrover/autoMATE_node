@@ -61,6 +61,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 			this.onAuthenticationFailure(Long.parseLong(((ClientAuthenticationMessage) message).username.substring(1)), 
 					((ClientAuthenticationMessage) message).password);
 		}
+		scheduleReconnect();
 	}
 
 	@Override
@@ -86,12 +87,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	@Override
 	public void onDisconnected() {
 		if(reconnect) {
-			timer.schedule(new TimerTask() {
-				@Override
-				public void run() {
-					reconnect();
-				}
-			}, 15000);
+			scheduleReconnect();
 		}
 	}
 
@@ -198,7 +194,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	@Override
 	protected void bindSelf() {
 		this.messageManager.bind(this);
-		this.messageManager.bind(this);
+		this.connectionManager.bind(this);
 	}
 
 	@Override
@@ -251,4 +247,14 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 
 	}
 
+	private void scheduleReconnect() {
+		timer.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				reconnect();
+			}
+		}, 15000);
+		System.out.println("Reconnecting in 15 sec.");
+	}
+	
 }

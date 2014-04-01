@@ -30,6 +30,7 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 
 	@Override
 	public void onConnecting() {
+		if(connectedState == ConnectedState.CONNECTING) return;
 		this.connectedState = ConnectedState.CONNECTING;
 		synchronized (mListeners) {
 			for(ConnectionListener listener : mListeners) {
@@ -41,10 +42,12 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 				}
 			}
 		}
+		System.out.println("--> Connecting to server...");
 	}
 
 	@Override
 	public void onConnected(String sessionKey) {
+		if(connectedState == ConnectedState.CONNECTED) return;
 		this.connectedState = ConnectedState.CONNECTED;
 		this.sessionKey = sessionKey;
 		synchronized (mListeners) {
@@ -57,10 +60,12 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 				}
 			}
 		}
+		System.out.println("--> Connected to server!");
 	}
 
 	@Override
 	public void onDisconnected() {
+		if(connectedState == ConnectedState.DISCONNECTED) return;
 		this.connectedState = ConnectedState.DISCONNECTED;
 		this.sessionKey = null;
 		synchronized (mListeners) {
@@ -73,6 +78,7 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 				}
 			}
 		}
+		System.out.println("--> Connecting lost.");
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////

@@ -56,7 +56,8 @@ public class IncomingPacketListenerThread extends Thread {
 					StringBuilder sb = new StringBuilder();
 					while(true) {
 						line = reader.readLine();
-						if(line == null || line.equals("\0")) break;
+						if(line == null) throw new IOException();
+						else if(line.equals("\0")) break;
 						sb.append(line);
 						sb.append('\n');
 					}
@@ -68,11 +69,10 @@ public class IncomingPacketListenerThread extends Thread {
 				if(socket != null && !socket.isClosed()) {
 					try {
 						socket.close();
-					} catch (IOException e1) {
-						manager.onReceiveIoException();
-					}
+					} catch (IOException e1) {}
 					socket = null;
 				}
+				manager.onReceiveIoException();
 			} catch(Exception e) {
 				if(socket != null && !socket.isClosed()) {
 					try {

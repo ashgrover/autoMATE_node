@@ -18,7 +18,9 @@ import com.automate.protocol.Message;
 import com.automate.protocol.MessageFormatException;
 import com.automate.protocol.client.ClientProtocolParameters;
 import com.automate.protocol.client.messages.ClientAuthenticationMessage;
+import com.automate.protocol.client.messages.ClientPingMessage;
 import com.automate.protocol.server.ServerProtocolParameters;
+import com.automate.protocol.server.messages.ServerPingMessage;
 import com.automate.util.xml.XmlFormatException;
 
 public class MessageManager extends ManagerBase<MessageListener> implements
@@ -65,7 +67,9 @@ IMessageManager {
 	}
 
 	public void onEmptyPacketReceived() {}
-	public void onReceiveIoException() {}
+	public void onReceiveIoException() {
+		connectionManager.disconnect();
+	}
 	public void onNoSocketProvided() {}
 	public void onReceiveError() {}
 
@@ -179,6 +183,9 @@ IMessageManager {
 		}
 		System.out.println("\n------------------------------------------------------------\n"
 				+ "Message received.\n------------------------------------------------------------\n" + message);
+		if(message instanceof ServerPingMessage) {
+			sendMessage(new ClientPingMessage(getProtocolParameters()));
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
