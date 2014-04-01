@@ -117,7 +117,7 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 		if(state == ConnectedState.DISCONNECTED) {
 			this.warningQueue.add(warning);
 		} else {
-			NodeWarningMessage mWarning = new NodeWarningMessage(messageManager.getProtocolParameters(),0,warning);
+			NodeWarningMessage mWarning = new NodeWarningMessage(messageManager.getProtocolParameters(), warning);
 			messageManager.sendMessage(mWarning);
 		}
 	}

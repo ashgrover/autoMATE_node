@@ -20,7 +20,7 @@ public class StatusUpdateMessageHandler implements IMessageHandler<ServerNodeSta
 	@Override
 	public Message<ClientProtocolParameters> handleMessage(ServerNodeStatusUpdateMessage message, Void params) {
 		statusManager.onStatusUpdateRequested();
-		return new NodeStatusUpdateMessage(messageManager.getProtocolParameters(), 0, statusManager.getStatuses());
+		return new NodeStatusUpdateMessage(messageManager.getProtocolParameters(), statusManager.getStatuses());
 	}
 
 }
