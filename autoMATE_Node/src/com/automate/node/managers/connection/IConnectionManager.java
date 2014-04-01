@@ -7,5 +7,7 @@ public interface IConnectionManager extends IManager<ConnectionListener>, Connec
 	public void scheduleDisconnect(long milis);
 
 	public void disconnect();
+
+	public String getSessionKey();
 	
 }

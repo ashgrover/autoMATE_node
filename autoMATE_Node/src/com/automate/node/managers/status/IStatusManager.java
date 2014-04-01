@@ -7,7 +7,7 @@ import com.automate.node.managers.connection.ConnectionListener;
 import com.automate.node.managers.message.MessageListener;
 import com.automate.protocol.models.Status;
 
-public interface IStatusManager extends IManager<StatusListener>, MessageListener, ConnectionListener, StatusListener {
+public interface IStatusManager extends IManager<StatusListener>, MessageListener, StatusListener {
 	
 	List<Status<?>> getStatuses();
 	

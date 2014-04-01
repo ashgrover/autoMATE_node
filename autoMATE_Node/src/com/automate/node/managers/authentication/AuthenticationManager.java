@@ -66,7 +66,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	@Override
 	public void onMessageReceived(Message<ServerProtocolParameters> message) {
 		if(message instanceof ServerAuthenticationMessage) {
-			Message<ClientProtocolParameters> response = messageHandler.handleMessage((ServerAuthenticationMessage) message, null);
+			Message<ClientProtocolParameters> response = messageHandler.handleMessage((ServerAuthenticationMessage) message, password);
 			if(response != null) {
 				messageManager.sendMessage(response);
 			}
@@ -114,6 +114,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 				}
 			}
 		}
+		connectionManager.onConnecting();
 	}
 
 	@Override
@@ -129,23 +130,24 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 				}
 			}
 		}
-		this.onDisconnected();
+		connectionManager.onDisconnected();
 	}
 
 	@Override
-	public void onAuthenticated(long nodeId, String password) {
+	public void onAuthenticated(long nodeId, String password, String sessionKey) {
 		this.state = AuthenticatedState.AUTHENTICATED;
 		writeCredentials(nodeId, password);
 		synchronized (mListeners) {
 			for(AuthenticationListener listener : mListeners) {
 				try {
-					listener.onAuthenticationFailure(nodeId, password);
+					listener.onAuthenticated(nodeId, password, sessionKey);
 				} catch (RuntimeException e) {
 					System.out.println("Error notifying listener.");
 					e.printStackTrace();
 				}
 			}
 		}
+		connectionManager.onConnected(sessionKey);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -225,7 +227,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 			break;
 
 		case AUTHENTICATED:
-			listener.onAuthenticated(nodeId, password);
+			listener.onAuthenticated(nodeId, password, connectionManager.getSessionKey());
 			break;
 
 		default: break;

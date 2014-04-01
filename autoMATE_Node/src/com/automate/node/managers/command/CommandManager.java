@@ -1,16 +1,20 @@
 package com.automate.node.managers.command;
 
-import java.util.List; 
+import java.util.List;  
 
 import com.automate.node.managers.IListener;
 import com.automate.node.managers.ManagerBase;
+import com.automate.node.managers.connection.ConnectionManager;
 import com.automate.node.managers.connection.IConnectionManager;
 import com.automate.node.managers.message.IMessageManager;
 import com.automate.node.utilities.FanGpioUtility;
 import com.automate.protocol.Message;
 import com.automate.protocol.client.ClientProtocolParameters;
 import com.automate.protocol.models.CommandArgument;
+import com.automate.protocol.models.Type;
+import com.automate.protocol.node.messages.NodeCommandMessage;
 import com.automate.protocol.server.ServerProtocolParameters;
+import com.automate.protocol.server.messages.ServerNodeCommandMessage;
 
 public class CommandManager extends ManagerBase<CommandListener> implements ICommandManager {
 
@@ -18,84 +22,60 @@ public class CommandManager extends ManagerBase<CommandListener> implements ICom
 	private IConnectionManager connectionManager;
 	private FanGpioUtility fanGpioUtility;
 	
+	private CommandMessageHandler messageHandler;
+
 	public CommandManager(IMessageManager messageManager, IConnectionManager connectionManager, FanGpioUtility fanGpioUtility) {
 		super(CommandListener.class);
 		this.messageManager = messageManager;
 		this.connectionManager = connectionManager;
 		this.fanGpioUtility = fanGpioUtility;
+		
+		this.messageHandler = new CommandMessageHandler(this, messageManager);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from MessageListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onMessageSent(Message<ClientProtocolParameters> message) {
-		// TODO Auto-generated method stub
-
+		if(message instanceof NodeCommandMessage) {
+			long commandId = ((NodeCommandMessage) message).commandId;
+			int responseCode = ((NodeCommandMessage) message).responseCode;
+			String responseMessage = ((NodeCommandMessage) message).message;
+			onCommandResult(commandId, responseCode, responseMessage);
+		}
 	}
-
-	@Override
-	public void onMessageNotSent(Message<ClientProtocolParameters> message) {
-		// TODO Auto-generated method stub
-
-	}
+	public void onMessageNotSent(Message<ClientProtocolParameters> message) {}
 
 	@Override
 	public void onMessageReceived(Message<ServerProtocolParameters> message) {
-		// TODO Auto-generated method stub
-		
+		if(message instanceof ServerNodeCommandMessage) {
+			Message<ClientProtocolParameters> response = messageHandler.handleMessage((ServerNodeCommandMessage) message, null);
+			if(response != null) {
+				messageManager.sendMessage(response);
+			}
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ConnectionListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	@Override
-	public void onConnecting() {
-		// TODO Auto-generated method stub
 
-	}
-
-	@Override
-	public void onConnected(String sessionKey) {
-		// TODO Auto-generated method stub
-
-	}
+	public void onConnecting() {}
+	public void onConnected(String sessionKey) {}
 
 	@Override
 	public void onDisconnected() {
-		// TODO Auto-generated method stub
-
+		this.fanGpioUtility.setSpeedOff(); // turn off when connection is lost
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from CommandListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
-	public void onCommandReceived(String commandName,
-			List<CommandArgument<?>> commandArgs, long commandId) {
-		
-		// calls executeCommand() - put in iCommandManager
-		if (commandName.equalsIgnoreCase("power on")) {
-			this.fanGpioUtility.setSpeedSlow();
-
-		} else if (commandName.equalsIgnoreCase("power off")) {
-			this.fanGpioUtility.setSpeedOff();
-
-		} else if (commandName.equalsIgnoreCase("set speed")) {
-			if (commandArgs.get(0).value == "Low") {
-				this.fanGpioUtility.setSpeedSlow();
-				
-			} else if (commandArgs.get(0).value == "Medium") {
-				this.fanGpioUtility.setSpeedMedium();
-				
-			} else if (commandArgs.get(0).value == "High") {
-				this.fanGpioUtility.setSpeedFast();
-			}
-		}
-		
+	public void onCommandReceived(String commandName, List<CommandArgument<?>> commandArgs, long commandId) {
 		synchronized(mListeners) {
 			for (CommandListener listener : mListeners) {
 				try {
@@ -106,14 +86,10 @@ public class CommandManager extends ManagerBase<CommandListener> implements ICom
 				}
 			}
 		}
-
 	}
 
 	@Override
-	public void onCommandResult(long commandId, int responseCode,
-			String responseMessage) {
-		// TODO Auto-generated method stub
-		
+	public void onCommandResult(long commandId, int responseCode, String responseMessage) {
 		synchronized(mListeners) {
 			for (CommandListener listener : mListeners) {
 				try {
@@ -123,24 +99,21 @@ public class CommandManager extends ManagerBase<CommandListener> implements ICom
 					e.printStackTrace();
 				}
 			}
-		};
-
+		}
 	}
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
-	public void onBind(Class<? extends IListener> listenerClass) {
-		// TODO Auto-generated method stub
-		
-	}
-	
+	public void onBind(Class<? extends IListener> listenerClass) {}
+
 	@Override
 	public void onUnbind(Class<? extends IListener> listenerClass) {
-		// TODO Auto-generated method stub
-		
+		if(listenerClass.equals(ConnectionManager.class)) {
+			this.onDisconnected();
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -148,47 +121,62 @@ public class CommandManager extends ManagerBase<CommandListener> implements ICom
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@Override
-	public void executeCommand(String commandName, List<CommandArgument<?>> commandArgs, long commandId) {
-		// TODO Auto-generated method stub
-		
+	public int executeCommand(String commandName, List<CommandArgument<?>> commandArgs, long commandId) {
+		if (commandName.equalsIgnoreCase("power on")) {
+			this.fanGpioUtility.setSpeedSlow();
+			return 200; // OK
+
+		} else if (commandName.equalsIgnoreCase("power off")) {
+			this.fanGpioUtility.setSpeedOff();
+			return 200; // OK
+
+		} else if (commandName.equalsIgnoreCase("set speed")) {
+			if(commandArgs.size() == 1) {
+				if(commandArgs.get(0).type == Type.STRING) {
+					CommandArgument<String> speedArgument = (CommandArgument<String>) commandArgs.get(0);
+					if(speedArgument.name.equalsIgnoreCase("speed")) {
+						if (commandArgs.get(0).value == "Low") {
+							this.fanGpioUtility.setSpeedSlow();
+							return 200; // OK
+						} else if (commandArgs.get(0).value == "Medium") {
+							this.fanGpioUtility.setSpeedMedium();
+							return 200; // OK
+						} else if (commandArgs.get(0).value == "High") {
+							this.fanGpioUtility.setSpeedFast();
+							return 200; // OK
+						}
+					}
+				}
+			}
+			return 402; // INVALID_ARGS
+		} else {
+			return 401; // INVALID_COMMAND
+		}
 	}
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ManagerBase
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	protected void unbindSelf() {
-		// TODO Auto-generated method stub
-
+		this.messageManager.unbind(this);
+		this.connectionManager.unbind(this);
 	}
 
 	@Override
 	protected void bindSelf() {
-		// TODO Auto-generated method stub
-
+		this.messageManager.bind(this);
+		this.connectionManager.bind(this);
 	}
 
-	@Override
-	protected void setupInitialState() {
-		// TODO Auto-generated method stub
+	protected void setupInitialState() {}
+	protected void teardown() {}
 
-	}
-
-	@Override
-	protected void teardown() {
-		// TODO Auto-generated method stub
-
-	}
-	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ListenerBinder
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	@Override
-	protected void performInitialUpdate(CommandListener listener) {
-		// TODO Auto-generated method stub
 
-	}
+	protected void performInitialUpdate(CommandListener listener) {}
 
 }

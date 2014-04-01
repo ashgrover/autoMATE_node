@@ -9,6 +9,6 @@ import com.automate.protocol.models.CommandArgument;
 
 public interface ICommandManager extends IManager<CommandListener>, MessageListener, ConnectionListener, CommandListener {
 	
-	public void executeCommand(String commandName, List<CommandArgument<?>> commandArgs, long commandId);
+	public int executeCommand(String commandName, List<CommandArgument<?>> commandArgs, long commandId);
 	
 }

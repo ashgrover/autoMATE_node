@@ -96,7 +96,7 @@ public class AutoMateNode {
 	}
 
 	private IStatusManager createStatusManager() {
-		return new StatusManager(managers.messageManager, managers.connectionManager, gpioUtility);
+		return new StatusManager(managers.messageManager, gpioUtility);
 	}
 
 	private ICommandManager createCommandManager() {

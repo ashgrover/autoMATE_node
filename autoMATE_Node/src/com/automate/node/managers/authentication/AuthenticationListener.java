@@ -8,6 +8,6 @@ public interface AuthenticationListener extends IListener {
 	
 	public void onAuthenticationFailure(long nodeId, String password);
 	
-	public void onAuthenticated(long nodeId, String password);
+	public void onAuthenticated(long nodeId, String password, String sessionKey);
 	
 }

@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.automate.node.managers.IListener;
 import com.automate.node.managers.ManagerBase;
-import com.automate.node.managers.connection.IConnectionManager;
 import com.automate.node.managers.message.IMessageManager;
 import com.automate.node.utilities.FanGpioUtility;
 import com.automate.protocol.Message;
@@ -14,19 +13,20 @@ import com.automate.protocol.models.Status;
 import com.automate.protocol.models.Type;
 import com.automate.protocol.node.messages.NodeStatusUpdateMessage;
 import com.automate.protocol.server.ServerProtocolParameters;
+import com.automate.protocol.server.messages.ServerNodeStatusUpdateMessage;
 
 public class StatusManager extends ManagerBase<StatusListener> implements IStatusManager {
 
 	private IMessageManager messageManager;
-	private IConnectionManager connectionManager;
 	private FanGpioUtility fanGpioUtility;
 
-	public StatusManager(IMessageManager messageManager, IConnectionManager connectionManager, FanGpioUtility fanGpioUtility) {
+	private StatusUpdateMessageHandler messageHandler;
+	
+	public StatusManager(IMessageManager messageManager, FanGpioUtility fanGpioUtility) {
 		super(StatusListener.class);
 		this.messageManager = messageManager;
-		this.connectionManager = connectionManager;
 		this.fanGpioUtility = fanGpioUtility;
-		
+		this.messageHandler = new StatusUpdateMessageHandler(this, messageManager);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35,42 +35,25 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 	
 	@Override
 	public void onMessageSent(Message<ClientProtocolParameters> message) {
-		// TODO Auto-generated method stub
-
+		if(message instanceof NodeStatusUpdateMessage) {
+			this.onStatusUpdateSent(((NodeStatusUpdateMessage) message).statuses);
+		}
 	}
-
-	@Override
-	public void onMessageNotSent(Message<ClientProtocolParameters> message) {
-		// TODO Auto-generated method stub
-
-	}
+	
+	public void onMessageNotSent(Message<ClientProtocolParameters> message) {}
 
 	@Override
 	public void onMessageReceived(Message<ServerProtocolParameters> message) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////
-	// Inherited from ConnectionListener
-	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	@Override
-	public void onConnecting() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onConnected(String sessionKey) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onDisconnected() {
-		// TODO Auto-generated method stub
-
+		if(message instanceof ServerNodeStatusUpdateMessage) {
+			/*
+			 * COMMENTS: When a status update message is received, the handler will return the response message.
+			 * The handler calls getStatuses() for the current status of the node.
+			 */
+			Message<ClientProtocolParameters> response = messageHandler.handleMessage((ServerNodeStatusUpdateMessage) message, null);
+			if(response != null) {
+				messageManager.sendMessage(response);
+			}
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -79,59 +62,44 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 	
 	@Override
 	public void onStatusUpdateRequested() {
-		
-		int speed = fanGpioUtility.getFanSpeed();
-		Status<?> currentStatus = null;
-		
-		// get the current status
-		
-		if (speed == 0) {
-			currentStatus = Status.newStatus("Table Fan", Type.INTEGER, 0);
-			
-		} else if (speed == 1) {
-			currentStatus = Status.newStatus("Table Fan", Type.INTEGER, 1);
-			
-		} else if (speed == 2) {
-			currentStatus = Status.newStatus("Table Fan", Type.INTEGER, 2);
-			
-		} else if (speed == 3) {
-			currentStatus = Status.newStatus("Table Fan", Type.INTEGER, 3);
-			
+		/*
+		 * COMMENTS: This method just forwards onStatusUpdateRequested events to listeners
+		 */
+		synchronized (mListeners) {
+			for(StatusListener listener : mListeners) {
+				try {
+					listener.onStatusUpdateRequested();
+				} catch (RuntimeException e) {
+					System.err.println("Error notifying listener.");
+					e.printStackTrace();
+				}
+			}
 		}
-		
-		List<Status<?>> statusList = new ArrayList<Status<?>>();
-		statusList.add(currentStatus);
-		
-		// TODO
-		int nodeId = 0;
-		ClientProtocolParameters cpp = messageManager.getProtocolParameters();
-		NodeStatusUpdateMessage updateMessage = new NodeStatusUpdateMessage(cpp, nodeId , statusList);
-		
-		messageManager.sendMessage(updateMessage);
-		
 	}
 
 	@Override
 	public void onStatusUpdateSent(List<Status<?>> statuses) {
-		// TODO Auto-generated method stub
-
+		/*
+		 * COMMENTS: This method just forwards onStatusUpdateSent events to listeners
+		 */
+		synchronized (mListeners) {
+			for(StatusListener listener : mListeners) {
+				try {
+					listener.onStatusUpdateSent(statuses);
+				} catch (RuntimeException e) {
+					System.err.println("Error notifying listener.");
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	@Override
-	public void onBind(Class<? extends IListener> listenerClass) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	@Override
-	public void onUnbind(Class<? extends IListener> listenerClass) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onBind(Class<? extends IListener> listenerClass) {}
+	public void onUnbind(Class<? extends IListener> listenerClass) {}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IStatusManager
@@ -139,8 +107,19 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 	
 	@Override
 	public List<Status<?>> getStatuses() {
-		// TODO Auto-generated method stub
-		return null;
+		/*
+		 * COMMENTS:  I moved this code here from onStatusUpdateRequested.
+		 */
+		int speed = fanGpioUtility.getFanSpeed();
+		List<Status<?>> statusList = new ArrayList<Status<?>>();
+		
+		if (speed == 0) {
+			statusList.add(Status.newStatus("Power On", Type.BOOLEAN, false));
+		} else {
+			statusList.add(Status.newStatus("Power On", Type.BOOLEAN, true));
+			Status.newStatus("Speed", Type.INTEGER, speed);
+		}
+		return statusList;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -149,36 +128,27 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 	
 	@Override
 	protected void unbindSelf() {
-		// TODO Auto-generated method stub
-
+		/*
+		 * COMMENTS: Use this method to detach as a listener from the dependencies
+		 */
+		messageManager.unbind(this);
 	}
 
 	@Override
 	protected void bindSelf() {
-		// TODO Auto-generated method stub
-
+		/*
+		 * COMMENTS: Use this method to attach as a listener to the dependencies
+		 */
+		messageManager.bind(this);
 	}
 
-	@Override
-	protected void setupInitialState() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	protected void teardown() {
-		// TODO Auto-generated method stub
-
-	}
+	protected void setupInitialState() { /* no state or resources */ }
+	protected void teardown() { /* no state or resources */ }
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ListenerBinder
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	@Override
-	protected void performInitialUpdate(StatusListener listener) {
-		// TODO Auto-generated method stub
-
-	}
+	protected void performInitialUpdate(StatusListener listener) { /* no state */}
 
 }
