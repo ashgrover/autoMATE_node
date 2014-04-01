@@ -7,7 +7,7 @@ import com.automate.node.managers.ManagerBase;
 import com.automate.node.managers.connection.ConnectionManager;
 import com.automate.node.managers.connection.IConnectionManager;
 import com.automate.node.managers.message.IMessageManager;
-import com.automate.node.utilities.FanGpioUtility;
+import com.automate.node.utilities.FanGpioInterface;
 import com.automate.protocol.Message;
 import com.automate.protocol.client.ClientProtocolParameters;
 import com.automate.protocol.models.CommandArgument;
@@ -20,11 +20,11 @@ public class CommandManager extends ManagerBase<CommandListener> implements ICom
 
 	private IMessageManager messageManager;
 	private IConnectionManager connectionManager;
-	private FanGpioUtility fanGpioUtility;
+	private FanGpioInterface fanGpioUtility;
 	
 	private CommandMessageHandler messageHandler;
 
-	public CommandManager(IMessageManager messageManager, IConnectionManager connectionManager, FanGpioUtility fanGpioUtility) {
+	public CommandManager(IMessageManager messageManager, IConnectionManager connectionManager, FanGpioInterface fanGpioUtility) {
 		super(CommandListener.class);
 		this.messageManager = messageManager;
 		this.connectionManager = connectionManager;

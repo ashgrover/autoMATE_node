@@ -23,7 +23,7 @@ import com.automate.node.managers.status.IStatusManager;
 import com.automate.node.managers.status.StatusManager;
 import com.automate.node.managers.warning.IWarningManager;
 import com.automate.node.managers.warning.WarningManager;
-import com.automate.node.utilities.FanGpioUtility;
+import com.automate.node.utilities.FanGpioInterface;
 import com.automate.protocol.IncomingMessageParser;
 import com.automate.protocol.Message;
 import com.automate.protocol.Message.MessageType;
@@ -39,7 +39,7 @@ public class AutoMateNode {
 	private Properties configurationProperties;
 	private boolean started;
 	private Managers managers;
-	private FanGpioUtility gpioUtility;
+	private FanGpioInterface gpioUtility;
 
 	public AutoMateNode(Properties configurationProperties) {
 		this.configurationProperties = configurationProperties;

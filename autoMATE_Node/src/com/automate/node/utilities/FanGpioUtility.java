@@ -11,7 +11,7 @@ import com.pi4j.io.gpio.RaspiPin;
  * @author Ian Kabeary
  * @version 1.0
  */
-public class FanGpioUtility {
+public class FanGpioUtility implements FanGpioInterface {
 	// create gpio controller
 	private GpioController gpioController = GpioFactory.getInstance();
 	
@@ -78,11 +78,11 @@ public class FanGpioUtility {
     	}
     }
     
-    /**
-     * Returns integer representation of fan speed. 0=Off, 1=Slow, 2=Medium, 3=Fast, -1=Invalid state
-     * @return integer
-     */
-    public int getFanSpeed() {
+    /* (non-Javadoc)
+	 * @see com.automate.node.utilities.FanGpioInterface#getFanSpeed()
+	 */
+    @Override
+	public int getFanSpeed() {
     	
     	if (   getPinState(this.pin4Slow) == true 
     		&& getPinState(this.pin0Medium) == false
@@ -105,11 +105,11 @@ public class FanGpioUtility {
         }
     }
     
-    /**
-     * Sets all pins to LOW.
-     * @return success(?) as boolean
-     */
-    public boolean setSpeedOff() {
+    /* (non-Javadoc)
+	 * @see com.automate.node.utilities.FanGpioInterface#setSpeedOff()
+	 */
+    @Override
+	public boolean setSpeedOff() {
     	
     	try {
     		setAllPinsLow();
@@ -120,11 +120,11 @@ public class FanGpioUtility {
     	return true;
     }
     
-    /**
-     * Sets fan speed to slow after setting all pins LOW.
-     * @return success(?) as boolean
-     */
-    public boolean setSpeedSlow() {
+    /* (non-Javadoc)
+	 * @see com.automate.node.utilities.FanGpioInterface#setSpeedSlow()
+	 */
+    @Override
+	public boolean setSpeedSlow() {
     	
     	try {
     		setAllPinsLow();
@@ -136,11 +136,11 @@ public class FanGpioUtility {
     	return true;
     }
     
-    /**
-     * Sets fan speed to medium after setting all pins LOW.
-     * @return success(?) as boolean
-     */
-    public boolean setSpeedMedium() {
+    /* (non-Javadoc)
+	 * @see com.automate.node.utilities.FanGpioInterface#setSpeedMedium()
+	 */
+    @Override
+	public boolean setSpeedMedium() {
     	
     	try {
     		setAllPinsLow();
@@ -152,11 +152,11 @@ public class FanGpioUtility {
     	return true;
     }
     
-    /**
-     * Sets fan speed to fast after setting all pins LOW.
-     * @return success(?) as boolean
-     */
-    public boolean setSpeedFast() {
+    /* (non-Javadoc)
+	 * @see com.automate.node.utilities.FanGpioInterface#setSpeedFast()
+	 */
+    @Override
+	public boolean setSpeedFast() {
     	
     	try {
     		setAllPinsLow();
