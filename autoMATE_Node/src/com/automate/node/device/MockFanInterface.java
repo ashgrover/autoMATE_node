@@ -1,4 +1,4 @@
-package com.automate.node.utilities;
+package com.automate.node.device;
 
 /**
  * Check out this sick fan emulator. It give the real fan experience without the
@@ -6,7 +6,7 @@ package com.automate.node.utilities;
  * @author jamie.bertram
  *
  */
-public class MockFanGpio implements FanGpioInterface {
+public class MockFanInterface implements FanInterface {
 
 	private int fanSpeed;
 	

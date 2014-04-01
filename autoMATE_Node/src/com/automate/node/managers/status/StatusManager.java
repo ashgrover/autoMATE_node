@@ -3,10 +3,10 @@ package com.automate.node.managers.status;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.automate.node.device.FanInterface;
 import com.automate.node.managers.IListener;
 import com.automate.node.managers.ManagerBase;
 import com.automate.node.managers.message.IMessageManager;
-import com.automate.node.utilities.FanGpioInterface;
 import com.automate.protocol.Message;
 import com.automate.protocol.client.ClientProtocolParameters;
 import com.automate.protocol.models.Status;
@@ -18,11 +18,11 @@ import com.automate.protocol.server.messages.ServerNodeStatusUpdateMessage;
 public class StatusManager extends ManagerBase<StatusListener> implements IStatusManager {
 
 	private IMessageManager messageManager;
-	private FanGpioInterface fanGpioUtility;
+	private FanInterface fanGpioUtility;
 
 	private StatusUpdateMessageHandler messageHandler;
 	
-	public StatusManager(IMessageManager messageManager, FanGpioInterface fanGpioUtility) {
+	public StatusManager(IMessageManager messageManager, FanInterface fanGpioUtility) {
 		super(StatusListener.class);
 		this.messageManager = messageManager;
 		this.fanGpioUtility = fanGpioUtility;

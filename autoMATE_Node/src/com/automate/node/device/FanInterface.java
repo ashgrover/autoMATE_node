@@ -1,6 +1,6 @@
-package com.automate.node.utilities;
+package com.automate.node.device;
 
-public interface FanGpioInterface {
+public interface FanInterface {
 
 	/**
 	 * Returns integer representation of fan speed. 0=Off, 1=Slow, 2=Medium, 3=Fast, -1=Invalid state

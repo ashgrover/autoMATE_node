@@ -8,6 +8,9 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.automate.node.device.FanGpioInterface;
+import com.automate.node.device.FanInterface;
+import com.automate.node.device.MockFanInterface;
 import com.automate.node.managers.authentication.AuthenticationManager;
 import com.automate.node.managers.authentication.IAuthenticationManager;
 import com.automate.node.managers.command.CommandManager;
@@ -23,7 +26,6 @@ import com.automate.node.managers.status.IStatusManager;
 import com.automate.node.managers.status.StatusManager;
 import com.automate.node.managers.warning.IWarningManager;
 import com.automate.node.managers.warning.WarningManager;
-import com.automate.node.utilities.FanGpioInterface;
 import com.automate.protocol.IncomingMessageParser;
 import com.automate.protocol.Message;
 import com.automate.protocol.Message.MessageType;
@@ -39,7 +41,7 @@ public class AutoMateNode {
 	private Properties configurationProperties;
 	private boolean started;
 	private Managers managers;
-	private FanGpioInterface gpioUtility;
+	private FanInterface gpioUtility;
 
 	public AutoMateNode(Properties configurationProperties) {
 		this.configurationProperties = configurationProperties;
@@ -57,7 +59,7 @@ public class AutoMateNode {
 	public void stop() {
 		if(started) {
 			terminateSubsystems();
-			//gpioUtility.setSpeedOff();
+			gpioUtility.setSpeedOff();
 			started = false;
 		} else {
 			throw new IllegalStateException("Node cannot be stopped twice.");
@@ -67,10 +69,13 @@ public class AutoMateNode {
 	private void initSubsystems() throws InitializationException {
 		try {
 			this.managers = new Managers();
-			/*
-			this.gpioUtility = new FanGpioUtility();
+			String fanInterface = configurationProperties.getProperty("fan.interface");
+			if(fanInterface == null || fanInterface.equals("mock")) {
+				this.gpioUtility = new MockFanInterface();
+			} else if(fanInterface.equals("gpio")) {
+				this.gpioUtility = new FanGpioInterface();
+			}
 			gpioUtility.setSpeedOff();
-			*/
 			managers.packetManager = createPacketManager();
 			managers.connectionManager = createConnectionManager();
 			managers.messageManager = createMessageManager();
@@ -131,12 +136,12 @@ public class AutoMateNode {
 	private HashMap<String, MessageSubParser<? extends Message<ServerProtocolParameters>, ServerProtocolParameters>> createMessageSubParsers() {
 		HashMap<String, MessageSubParser<? extends Message<ServerProtocolParameters>, ServerProtocolParameters>> subParsers = 
 				new HashMap<String, MessageSubParser<? extends Message<ServerProtocolParameters>,ServerProtocolParameters>>();
-		
+
 		subParsers.put(MessageType.AUTHENTICATION.toString(), new ServerAuthenticationMessageSubParser());
 		subParsers.put(MessageType.COMMAND_CLIENT.toString(), new ServerNodeCommandMessageSubParser());
 		subParsers.put(MessageType.PING.toString(), new ServerPingMessageSubParser());
 		subParsers.put(MessageType.STATUS_UPDATE_CLIENT.toString(), new ServerNodeStatusUpdateMessageSubParser());
-		
+
 		return subParsers;
 	}
 
@@ -161,7 +166,7 @@ public class AutoMateNode {
 		managers.messageManager.stop();
 		managers.connectionManager.stop();
 		managers.packetManager.stop();
-		
+
 		this.managers = null;
 	}
 

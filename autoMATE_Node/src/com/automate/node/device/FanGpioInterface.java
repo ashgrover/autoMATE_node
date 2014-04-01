@@ -1,4 +1,4 @@
-package com.automate.node.utilities;
+package com.automate.node.device;
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
@@ -11,7 +11,7 @@ import com.pi4j.io.gpio.RaspiPin;
  * @author Ian Kabeary
  * @version 1.0
  */
-public class FanGpioUtility implements FanGpioInterface {
+public class FanGpioInterface implements FanInterface {
 	// create gpio controller
 	private GpioController gpioController = GpioFactory.getInstance();
 	
@@ -22,7 +22,7 @@ public class FanGpioUtility implements FanGpioInterface {
 	/**
 	 * Constructor. Initializes GpioController and initializes all used pins to LOW.
 	 */
-	public FanGpioUtility() {
+	public FanGpioInterface() {
 		
 		this.gpioController = GpioFactory.getInstance();
 		
