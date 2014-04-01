@@ -57,7 +57,7 @@ public class AutoMateNode {
 	public void stop() {
 		if(started) {
 			terminateSubsystems();
-			gpioUtility.setSpeedOff();
+			//gpioUtility.setSpeedOff();
 			started = false;
 		} else {
 			throw new IllegalStateException("Node cannot be stopped twice.");
@@ -67,10 +67,10 @@ public class AutoMateNode {
 	private void initSubsystems() throws InitializationException {
 		try {
 			this.managers = new Managers();
-
+			/*
 			this.gpioUtility = new FanGpioUtility();
 			gpioUtility.setSpeedOff();
-			
+			*/
 			managers.packetManager = createPacketManager();
 			managers.connectionManager = createConnectionManager();
 			managers.messageManager = createMessageManager();
@@ -96,11 +96,11 @@ public class AutoMateNode {
 	}
 
 	private IStatusManager createStatusManager() {
-		return new StatusManager(managers.messageManager, managers.connectionManager);
+		return new StatusManager(managers.messageManager, managers.connectionManager, gpioUtility);
 	}
 
 	private ICommandManager createCommandManager() {
-		return new CommandManager(managers.messageManager, managers.connectionManager);
+		return new CommandManager(managers.messageManager, managers.connectionManager, gpioUtility);
 	}
 
 	private IAuthenticationManager createAuthenticationManager() {

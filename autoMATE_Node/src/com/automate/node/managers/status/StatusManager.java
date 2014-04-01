@@ -20,17 +20,13 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 	private IMessageManager messageManager;
 	private IConnectionManager connectionManager;
 	private FanGpioUtility fanGpioUtility;
-	private int nodeId;
-	private ClientProtocolParameters cpp;
-	
-	public StatusManager(IMessageManager messageManager, IConnectionManager connectionManager) {
+
+	public StatusManager(IMessageManager messageManager, IConnectionManager connectionManager, FanGpioUtility fanGpioUtility) {
 		super(StatusListener.class);
 		this.messageManager = messageManager;
 		this.connectionManager = connectionManager;
-		this.fanGpioUtility = new FanGpioUtility();
+		this.fanGpioUtility = fanGpioUtility;
 		
-		this.nodeId = 0;
-		this.cpp = messageManager.getProtocolParameters();
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -107,8 +103,9 @@ public class StatusManager extends ManagerBase<StatusListener> implements IStatu
 		statusList.add(currentStatus);
 		
 		// TODO
-		this.cpp = null;
-		NodeStatusUpdateMessage updateMessage = new NodeStatusUpdateMessage(this.cpp, this.nodeId , statusList);
+		int nodeId = 0;
+		ClientProtocolParameters cpp = messageManager.getProtocolParameters();
+		NodeStatusUpdateMessage updateMessage = new NodeStatusUpdateMessage(cpp, nodeId , statusList);
 		
 		messageManager.sendMessage(updateMessage);
 		

@@ -19,9 +19,9 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	private IConnectionManager connectionManager;
 
 	private ArrayList<String> warningQueue = new ArrayList<String>();
-	
+
 	private ConnectedState state;
-	
+
 	public WarningManager(IMessageManager messageManager, IConnectionManager connectionManager) {
 		super(WarningListener.class);
 		this.messageManager = messageManager;
@@ -31,7 +31,7 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from MessageListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onMessageSent(Message<ClientProtocolParameters> message) {
 		if(message instanceof NodeWarningMessage){
@@ -55,7 +55,7 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ConnectionListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onConnecting() {}
 
@@ -76,15 +76,16 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from WarningListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onWarningEmitted(String warning) {
-		for(WarningListener listener : mListeners){
-			try{
-				listener.onWarningEmitted(warning);
-			}
-			catch(RuntimeException e){
-				System.out.println(e.getStackTrace());
+		synchronized (mListeners) {
+			for(WarningListener listener : mListeners){
+				try {
+					listener.onWarningEmitted(warning);
+				} catch(RuntimeException e){
+					System.out.println(e.getStackTrace());
+				}
 			}
 		}
 
@@ -110,7 +111,7 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IWarningManager
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void emitWarning(String warning) {
 		if(state == ConnectedState.DISCONNECTED) {
@@ -120,7 +121,7 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 			messageManager.sendMessage(mWarning);
 		}
 	}
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ManagerBase
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,7 +131,7 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 		// TODO Auto-generated method stub
 		this.messageManager.unbind(this);
 		this.connectionManager.unbind(this);
-	
+
 	}
 
 	@Override
@@ -153,10 +154,10 @@ public class WarningManager extends ManagerBase<WarningListener> implements IWar
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ListenerBinder
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	protected void performInitialUpdate(WarningListener listener) {
-		
+
 	}
 
 }

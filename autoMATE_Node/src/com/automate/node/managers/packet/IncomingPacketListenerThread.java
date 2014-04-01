@@ -46,6 +46,7 @@ public class IncomingPacketListenerThread extends Thread {
 					if(socket == null) {
 						try {
 							socketLock.wait();
+							if(cancelled) return;
 						} catch (InterruptedException e) {}
 					}
 				}
@@ -82,13 +83,16 @@ public class IncomingPacketListenerThread extends Thread {
 	}
 
 	public void cancel() {
+		cancelled = true;
 		if(socket != null) {
 			try {
-				cancelled = true;
-				socket = null;
 				socket.close();
-				threadpool.shutdown();
 			} catch (IOException e) {}
+			socket = null;
+		}
+		threadpool.shutdown();
+		synchronized (socketLock) {
+			socketLock.notify();
 		}
 	}
 }

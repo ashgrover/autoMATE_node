@@ -13,30 +13,32 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 		CONNECTING,
 		DISCONNECTED
 	}
-	
+
 	private ConnectedState connectedState;
-	
+
 	private Timer timer;
 
 	private String sessionKey;
-	
+
 	public ConnectionManager() {
 		super(ConnectionListener.class);
 	}
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ConnectionListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onConnecting() {
 		this.connectedState = ConnectedState.CONNECTING;
-		for(ConnectionListener listener : mListeners) {
-			try {
-				listener.onConnecting();
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		synchronized (mListeners) {
+			for(ConnectionListener listener : mListeners) {
+				try {
+					listener.onConnecting();
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -45,12 +47,14 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 	public void onConnected(String sessionKey) {
 		this.connectedState = ConnectedState.CONNECTED;
 		this.sessionKey = sessionKey;
-		for(ConnectionListener listener : mListeners) {
-			try {
-				listener.onConnected(sessionKey);
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		synchronized (mListeners) {
+			for(ConnectionListener listener : mListeners) {
+				try {
+					listener.onConnected(sessionKey);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -59,12 +63,14 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 	public void onDisconnected() {
 		this.connectedState = ConnectedState.DISCONNECTED;
 		this.sessionKey = null;
-		for(ConnectionListener listener : mListeners) {
-			try {
-				listener.onDisconnected();
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		synchronized (mListeners) {
+			for(ConnectionListener listener : mListeners) {
+				try {
+					listener.onDisconnected();
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -72,7 +78,7 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onBind(Class<? extends IListener> listenerClass) {
 		//no bindings
@@ -86,7 +92,7 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IConnectionManager
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void scheduleDisconnect(long milis) {
 		timer.schedule(new TimerTask() {
@@ -105,7 +111,7 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ManagerBase
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	protected void unbindSelf() {
 		//no bindings
@@ -119,6 +125,7 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 	@Override
 	protected void setupInitialState() {
 		timer = new Timer("Connection Timer");
+		connectedState = ConnectedState.DISCONNECTED;
 	}
 
 	@Override
@@ -129,18 +136,18 @@ public class ConnectionManager extends ManagerBase<ConnectionListener> implement
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ListenerBinder
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	protected void performInitialUpdate(ConnectionListener listener) {
 		switch (connectedState) {
 		case CONNECTED:
 			listener.onConnected(sessionKey);
 			break;
-			
+
 		case CONNECTING:
 			listener.onConnecting();
 			break;
-			
+
 		case DISCONNECTED:
 			listener.onDisconnected();
 			break;

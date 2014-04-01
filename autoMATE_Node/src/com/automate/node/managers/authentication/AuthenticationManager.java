@@ -24,9 +24,9 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 		AUTHENTICATING,
 		AUTHENTICATED
 	}
-	
+
 	private AuthenticatedState state;
-	
+
 	private IMessageManager messageManager;
 	private IConnectionManager connectionManager;
 	private AuthenticationMessageHandler messageHandler;
@@ -34,7 +34,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	private boolean reconnect;
 	private long nodeId;
 	private String password;
-	
+
 	public AuthenticationManager(IMessageManager messageManager, IConnectionManager connectionManager, long nodeId, String password) {
 		super(AuthenticationListener.class);
 		this.messageManager = messageManager;
@@ -47,18 +47,19 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from MessageListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onMessageSent(Message<ClientProtocolParameters> message) {
 		if(message instanceof ClientAuthenticationMessage) {
-			this.onAuthenticating(Long.parseLong(((ClientAuthenticationMessage) message).username), ((ClientAuthenticationMessage) message).password);
+			this.onAuthenticating(Long.parseLong(((ClientAuthenticationMessage) message).username.substring(1)), ((ClientAuthenticationMessage) message).password);
 		}
 	}
 
 	@Override
 	public void onMessageNotSent(Message<ClientProtocolParameters> message) {
 		if(message instanceof ClientAuthenticationMessage) {
-			this.onAuthenticationFailure(Long.parseLong(((ClientAuthenticationMessage) message).username), ((ClientAuthenticationMessage) message).password);
+			this.onAuthenticationFailure(Long.parseLong(((ClientAuthenticationMessage) message).username.substring(1)), 
+					((ClientAuthenticationMessage) message).password);
 		}
 	}
 
@@ -75,7 +76,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ConnectionManager
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onConnecting() {}
 
@@ -97,18 +98,20 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from AuthenticationManager
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onAuthenticating(long nodeId, String password) {
 		this.state = AuthenticatedState.AUTHENTICATING;
 		this.nodeId = nodeId;
 		this.password = password;
-		for(AuthenticationListener listener : mListeners) {
-			try {
-				listener.onAuthenticating(nodeId, password);
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener.");
-				e.printStackTrace();
+		synchronized (mListeners) {
+			for(AuthenticationListener listener : mListeners) {
+				try {
+					listener.onAuthenticating(nodeId, password);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener.");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -116,38 +119,43 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	@Override
 	public void onAuthenticationFailure(long nodeId, String password) {
 		this.state = AuthenticatedState.NOT_AUTHENTICATED;
-		for(AuthenticationListener listener : mListeners) {
-			try {
-				listener.onAuthenticationFailure(nodeId, password);
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener.");
-				e.printStackTrace();
+		synchronized (mListeners) {
+			for(AuthenticationListener listener : mListeners) {
+				try {
+					listener.onAuthenticationFailure(nodeId, password);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener.");
+					e.printStackTrace();
+				}
 			}
 		}
+		this.onDisconnected();
 	}
 
 	@Override
 	public void onAuthenticated(long nodeId, String password) {
 		this.state = AuthenticatedState.AUTHENTICATED;
 		writeCredentials(nodeId, password);
-		for(AuthenticationListener listener : mListeners) {
-			try {
-				listener.onAuthenticationFailure(nodeId, password);
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener.");
-				e.printStackTrace();
+		synchronized (mListeners) {
+			for(AuthenticationListener listener : mListeners) {
+				try {
+					listener.onAuthenticationFailure(nodeId, password);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener.");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public void onBind(Class<? extends IListener> listenerClass) {
 	}
-	
+
 	@Override
 	public void onUnbind(Class<? extends IListener> listenerClass) {
 		if(listenerClass.equals(ConnectionListener.class)) {
@@ -159,10 +167,10 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from IAuthenticationManager
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	public boolean signIn(long nodeId, String password) {
-		ClientAuthenticationMessage message = new ClientAuthenticationMessage(messageManager.getProtocolParameters(), String.valueOf(nodeId), password);
+		ClientAuthenticationMessage message = new ClientAuthenticationMessage(messageManager.getProtocolParameters(), "$" + String.valueOf(nodeId), password);
 		this.reconnect = true;
 		messageManager.sendMessage(message);
 		return true;
@@ -178,7 +186,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ManagerBase
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	protected void unbindSelf() {
 		this.messageManager.unbind(this);
@@ -208,26 +216,26 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ListenerBinder
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	@Override
 	protected void performInitialUpdate(AuthenticationListener listener) {
 		switch(state) {
-			case AUTHENTICATING:
-				listener.onAuthenticating(nodeId, password);
-				break;
-	
-			case AUTHENTICATED:
-				listener.onAuthenticated(nodeId, password);
-				break;
-			
-			default: break;
+		case AUTHENTICATING:
+			listener.onAuthenticating(nodeId, password);
+			break;
+
+		case AUTHENTICATED:
+			listener.onAuthenticated(nodeId, password);
+			break;
+
+		default: break;
 		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// private utility methods
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	private void writeCredentials(long nodeId, String password) {
 		try {
 			File outfile = new File("resources/credentials.properties");
@@ -238,7 +246,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 		} catch (IOException e) {
 			System.out.println("Error writing credentials to disk.");
 		}
-		
+
 	}
-	
+
 }

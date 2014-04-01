@@ -17,7 +17,7 @@ IPacketManager {
 
 	private String serverAddress;
 	private int serverPort;
-	
+
 	public PacketManager(IncomingPacketListenerThread listenerThread, ExecutorService packetSendThreadpool, String serverAddress, int serverPort) {
 		super(PacketListener.class);
 		this.listenerThread = listenerThread;
@@ -33,120 +33,142 @@ IPacketManager {
 
 	@Override
 	public void onPacketReceived(String packet) {
-		for(PacketListener listener : mListeners) {
-			try {
-				listener.onPacketReceived(packet);
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		System.out.println("\n------------------------------------------------------------"
+				+ "Packet Received:\n------------------------------------------------------------\n" + packet);
+		synchronized (mListeners) { 
+			for(PacketListener listener : mListeners) {
+				try {
+					listener.onPacketReceived(packet);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
 
 	@Override
 	public void onEmptyPacketReceived() {
-		for(PacketListener listener : mListeners) {
-			try {
-				listener.onEmptyPacketReceived();
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		synchronized (mListeners) { 
+			for(PacketListener listener : mListeners) {
+				try {
+					listener.onEmptyPacketReceived();
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
 
 	@Override
 	public void onReceiveIoException() {
-		for(PacketListener listener : mListeners) {
-			try {
-				listener.onReceiveIoException();
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		synchronized (mListeners) { 
+			for(PacketListener listener : mListeners) {
+				try {
+					listener.onReceiveIoException();
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
 
 	@Override
 	public void onNoSocketProvided() {
-		for(PacketListener listener : mListeners) {
-			try {
-				listener.onNoSocketProvided();
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		synchronized (mListeners) { 
+			for(PacketListener listener : mListeners) {
+				try {
+					listener.onNoSocketProvided();
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
 
 	@Override
 	public void onReceiveError() {
-		for(PacketListener listener : mListeners) {
-			try {
-				listener.onReceiveError();
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		synchronized (mListeners) { 
+			for(PacketListener listener : mListeners) {
+				try {
+					listener.onReceiveError();
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
 
 	@Override
 	public void onPacketSent(int packetId) {
-		for(PacketListener listener : mListeners) {
-			try {
-				listener.onPacketSent(packetId);
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		synchronized (mListeners) { 
+			for(PacketListener listener : mListeners) {
+				try {
+					listener.onPacketSent(packetId);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
 
 	@Override
 	public void onSendIoException(int packetId) {
-		for(PacketListener listener : mListeners) {
-			try {
-				listener.onSendIoException(packetId);
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		synchronized (mListeners) { 
+			for(PacketListener listener : mListeners) {
+				try {
+					listener.onSendIoException(packetId);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
 
 	@Override
 	public void onSendNoServerAddress(int packetId) {
-		for(PacketListener listener : mListeners) {
-			try {
-				listener.onSendNoServerAddress(packetId);
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		synchronized (mListeners) { 
+			for(PacketListener listener : mListeners) {
+				try {
+					listener.onSendNoServerAddress(packetId);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
 
 	@Override
 	public void onSendNoServerPort(int packetId) {
-		for(PacketListener listener : mListeners) {
-			try {
-				listener.onSendNoServerPort(packetId);
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		synchronized (mListeners) { 
+			for(PacketListener listener : mListeners) {
+				try {
+					listener.onSendNoServerPort(packetId);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
 
 	@Override
 	public void onSendError(int packetId) {
-		for(PacketListener listener : mListeners) {
-			try {
-				listener.onSendError(packetId);
-			} catch (RuntimeException e) {
-				System.out.println("Error notifying listener");
-				e.printStackTrace();
+		synchronized (mListeners) { 
+			for(PacketListener listener : mListeners) {
+				try {
+					listener.onSendError(packetId);
+				} catch (RuntimeException e) {
+					System.out.println("Error notifying listener");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -206,6 +228,7 @@ IPacketManager {
 	@Override
 	protected void teardown() {
 		this.listenerThread.cancel();
+		this.packetSendThreadpool.shutdown();
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////

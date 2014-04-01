@@ -30,7 +30,6 @@ public abstract class ListenerBinder <T extends IListener> implements IListenerB
 		if(mBindAllowed) {
 			synchronized (mListeners) {
 				if(listener != null) {
-					mListeners.remove(listener);
 					listener.onUnbind(mListenerClass);
 				} else {
 					System.out.println(getClass().getName() + " - Attempt to remove null listener object.");
@@ -44,6 +43,7 @@ public abstract class ListenerBinder <T extends IListener> implements IListenerB
 			for(T listener : mListeners) {
 				unbind(listener);
 			}
+			mListeners.clear();
 		}
 	}
 	

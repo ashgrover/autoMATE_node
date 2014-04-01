@@ -28,10 +28,11 @@ public class PacketSendTask implements Runnable {
 			}
 			Socket socket = new Socket(serverAddress, serverPort);
 			PrintWriter writer = new PrintWriter(socket.getOutputStream());
-			System.out.println("Sending packet:\n" + packet);
 			writer.print(packet);
 			writer.print('\0');
+			writer.flush();
 			socket.close();
+			System.out.println("Sent packet:\n" + packet);
 			packetManager.onPacketSent(packetId);
 		} catch(IOException e) {
 			packetManager.onSendIoException(packetId);

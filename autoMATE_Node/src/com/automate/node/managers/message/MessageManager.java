@@ -16,6 +16,7 @@ import com.automate.protocol.IncomingMessageParser;
 import com.automate.protocol.Message;
 import com.automate.protocol.MessageFormatException;
 import com.automate.protocol.client.ClientProtocolParameters;
+import com.automate.protocol.client.messages.ClientAuthenticationMessage;
 import com.automate.protocol.server.ServerProtocolParameters;
 import com.automate.util.xml.XmlFormatException;
 
@@ -140,6 +141,8 @@ IMessageManager {
 				}
 			}
 		}
+		System.out.println("\n------------------------------------------------------------\n"
+				+ "Message sent.\n------------------------------------------------------------\n" + message);
 	}
 
 	@Override
@@ -154,6 +157,8 @@ IMessageManager {
 				}
 			}
 		}
+		System.out.println("\n------------------------------------------------------------\n"
+				+ "Message not sent.\n------------------------------------------------------------\n" + message);
 	}
 
 	@Override
@@ -168,6 +173,8 @@ IMessageManager {
 				}
 			}
 		}
+		System.out.println("\n------------------------------------------------------------\n"
+				+ "Message received.\n------------------------------------------------------------\n" + message);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,7 +197,7 @@ IMessageManager {
 
 	@Override
 	public void sendMessage(Message<ClientProtocolParameters> message) {
-		if(sessionKey == null) {
+		if(sessionKey == null && !(message instanceof ClientAuthenticationMessage)) {
 			onMessageNotSent(message);
 			return;
 		}
