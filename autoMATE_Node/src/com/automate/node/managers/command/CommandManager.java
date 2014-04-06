@@ -1,6 +1,8 @@
 package com.automate.node.managers.command;
 
 import java.util.List;  
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.automate.node.device.FanInterface;
 import com.automate.node.managers.IListener;
@@ -8,6 +10,7 @@ import com.automate.node.managers.ManagerBase;
 import com.automate.node.managers.connection.ConnectionManager;
 import com.automate.node.managers.connection.IConnectionManager;
 import com.automate.node.managers.message.IMessageManager;
+import com.automate.node.managers.warning.IWarningManager;
 import com.automate.protocol.Message;
 import com.automate.protocol.client.ClientProtocolParameters;
 import com.automate.protocol.models.CommandArgument;
@@ -20,14 +23,18 @@ public class CommandManager extends ManagerBase<CommandListener> implements ICom
 
 	private IMessageManager messageManager;
 	private IConnectionManager connectionManager;
+	private IWarningManager warningManager;
 	private FanInterface fanGpioUtility;
 	
 	private CommandMessageHandler messageHandler;
 
-	public CommandManager(IMessageManager messageManager, IConnectionManager connectionManager, FanInterface fanGpioUtility) {
+	private Timer timer;
+	
+	public CommandManager(IMessageManager messageManager, IConnectionManager connectionManager, FanInterface fanGpioUtility, IWarningManager warningManager) {
 		super(CommandListener.class);
 		this.messageManager = messageManager;
 		this.connectionManager = connectionManager;
+		this.warningManager = warningManager;
 		this.fanGpioUtility = fanGpioUtility;
 		
 		this.messageHandler = new CommandMessageHandler(this, messageManager);
@@ -58,6 +65,15 @@ public class CommandManager extends ManagerBase<CommandListener> implements ICom
 		}
 	}
 
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	// Inherited from WarningListener
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+
+	@Override
+	public void onWarningEmitted(String warning) {
+		
+	}
+	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ConnectionListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,6 +140,12 @@ public class CommandManager extends ManagerBase<CommandListener> implements ICom
 	public int executeCommand(String commandName, List<CommandArgument<?>> commandArgs, long commandId) {
 		if (commandName.equalsIgnoreCase("power on")) {
 			this.fanGpioUtility.setSpeedSlow();
+			timer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					warningManager.emitWarning("Fan has been on for some time!");
+				}
+			}, 30000);
 			return 200; // OK
 
 		} else if (commandName.equalsIgnoreCase("power off")) {
@@ -171,8 +193,12 @@ public class CommandManager extends ManagerBase<CommandListener> implements ICom
 		this.connectionManager.bind(this);
 	}
 
-	protected void setupInitialState() {}
-	protected void teardown() {}
+	protected void setupInitialState() {
+		timer = new Timer();
+	}
+	protected void teardown() {
+		timer.cancel();
+	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from ListenerBinder

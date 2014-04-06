@@ -80,9 +80,9 @@ public class AutoMateNode {
 			managers.connectionManager = createConnectionManager();
 			managers.messageManager = createMessageManager();
 			managers.authenticationManager = createAuthenticationManager();
-			managers.commandManager = createCommandManager();
 			managers.statusManager = createStatusManager();
 			managers.warningManager = createWarningManager();
+			managers.commandManager = createCommandManager();
 
 			managers.packetManager.start();
 			managers.connectionManager.start();
@@ -94,6 +94,7 @@ public class AutoMateNode {
 		} catch (RuntimeException e) {
 			throw new InitializationException(e);
 		}
+		
 	}
 
 	private IWarningManager createWarningManager() {
@@ -105,7 +106,7 @@ public class AutoMateNode {
 	}
 
 	private ICommandManager createCommandManager() {
-		return new CommandManager(managers.messageManager, managers.connectionManager, gpioUtility);
+		return new CommandManager(managers.messageManager, managers.connectionManager, gpioUtility, managers.warningManager);
 	}
 
 	private IAuthenticationManager createAuthenticationManager() {

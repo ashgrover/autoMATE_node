@@ -1,0 +1,39 @@
+<project name="node" default="dist">
+	<property name="app.name" value="autoMATE-fan-prototype" />
+	
+	<path id="classpath">
+		<fileset dir="lib/">
+		    <include name="*.jar"/>
+		</fileset>
+		<fileset dir="../../autoMATE_protocol/autoMATE_protocol/dist">
+		    <include name="*.jar"/>
+		</fileset>
+	</path>
+	
+	<target name="dist" depends="clean, build">
+		<mkdir dir="${dist}"/>
+		<mkdir dir="${build}/com/automate/protocol"/>
+		<copy todir="${build}/com/automate/protocol">
+			<fileset dir="../../autoMATE_protocol/autoMATE_protocol/build/com/automate/protocol" />
+		</copy>
+		<copy todir="${build}/com/automate/util">
+			<fileset dir="../../autoMATE_protocol/autoMATE_protocol/build/com/automate/util" />
+		</copy>
+		<jar jarfile="${dist}/${app.name}.jar" basedir="${build}">
+		    <restrict>
+		    	<name name="**/*.*"/>
+		    	<archives>
+		    		<zips>
+		        		<fileset dir="lib/" includes="*.jar"/>
+		      		</zips>
+		    	</archives>
+		    </restrict>
+			<manifest>
+				<attribute name="Main-Class" value="com.automate.node.NodeMain"/>
+			</manifest>
+		</jar>
+	</target>
+	
+	<import file="../../autoMATE_server/autoMATE_server/build-common.xml" />
+		
+</project>

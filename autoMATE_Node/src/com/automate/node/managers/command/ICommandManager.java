@@ -5,9 +5,10 @@ import java.util.List;
 import com.automate.node.managers.IManager;
 import com.automate.node.managers.connection.ConnectionListener;
 import com.automate.node.managers.message.MessageListener;
+import com.automate.node.managers.warning.WarningListener;
 import com.automate.protocol.models.CommandArgument;
 
-public interface ICommandManager extends IManager<CommandListener>, MessageListener, ConnectionListener, CommandListener {
+public interface ICommandManager extends IManager<CommandListener>, MessageListener, ConnectionListener, CommandListener, WarningListener {
 	
 	public int executeCommand(String commandName, List<CommandArgument<?>> commandArgs, long commandId);
 	
