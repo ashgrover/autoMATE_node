@@ -3,6 +3,7 @@ package com.automate.node;
 import com.automate.node.managers.authentication.IAuthenticationManager;
 import com.automate.node.managers.command.ICommandManager;
 import com.automate.node.managers.connection.IConnectionManager;
+import com.automate.node.managers.discovery.IDiscoveryManager;
 import com.automate.node.managers.message.IMessageManager;
 import com.automate.node.managers.packet.IPacketManager;
 import com.automate.node.managers.status.IStatusManager;
@@ -17,6 +18,6 @@ public class Managers {
 	public ICommandManager commandManager;
 	public IStatusManager statusManager;
 	public IWarningManager warningManager;
-
+	public IDiscoveryManager discoveryManager;
 	
 }

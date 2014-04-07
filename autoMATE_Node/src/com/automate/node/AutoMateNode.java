@@ -8,6 +8,8 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.automate.node.bluetooth.BluetoothInterface;
+import com.automate.node.bluetooth.BluetoothInterfaceImpl;
 import com.automate.node.device.FanGpioInterface;
 import com.automate.node.device.FanInterface;
 import com.automate.node.device.MockFanInterface;
@@ -17,6 +19,8 @@ import com.automate.node.managers.command.CommandManager;
 import com.automate.node.managers.command.ICommandManager;
 import com.automate.node.managers.connection.ConnectionManager;
 import com.automate.node.managers.connection.IConnectionManager;
+import com.automate.node.managers.discovery.DiscoveryManager;
+import com.automate.node.managers.discovery.IDiscoveryManager;
 import com.automate.node.managers.message.IMessageManager;
 import com.automate.node.managers.message.MessageManager;
 import com.automate.node.managers.packet.IPacketManager;
@@ -42,6 +46,7 @@ public class AutoMateNode {
 	private boolean started;
 	private Managers managers;
 	private FanInterface gpioUtility;
+	private BluetoothInterface bluetoothInterface;
 
 	public AutoMateNode(Properties configurationProperties) {
 		this.configurationProperties = configurationProperties;
@@ -75,10 +80,12 @@ public class AutoMateNode {
 			} else if(fanInterface.equals("gpio")) {
 				this.gpioUtility = new FanGpioInterface();
 			}
+			this.bluetoothInterface = new BluetoothInterfaceImpl();
 			gpioUtility.setSpeedOff();
 			managers.packetManager = createPacketManager();
 			managers.connectionManager = createConnectionManager();
 			managers.messageManager = createMessageManager();
+			managers.discoveryManager = createDiscoveryManager();
 			managers.authenticationManager = createAuthenticationManager();
 			managers.statusManager = createStatusManager();
 			managers.warningManager = createWarningManager();
@@ -87,6 +94,7 @@ public class AutoMateNode {
 			managers.packetManager.start();
 			managers.connectionManager.start();
 			managers.messageManager.start();
+			managers.discoveryManager.start();
 			managers.authenticationManager.start();
 			managers.commandManager.start();
 			managers.statusManager.start();
@@ -95,6 +103,23 @@ public class AutoMateNode {
 			throw new InitializationException(e);
 		}
 		
+	}
+
+	private IDiscoveryManager createDiscoveryManager() {
+		long nodeId = -1;
+		String password = null;
+		File credentialsFile = new File("resources/credentials.properties");
+		if(credentialsFile.exists()) {
+			Properties credentials = new Properties();
+			try {
+				credentials.load(new FileInputStream(credentialsFile));
+				nodeId = Long.parseLong(credentials.getProperty("credentials.nodeId"));
+				password = credentials.getProperty("credentials.password");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return new DiscoveryManager(nodeId, password, this.bluetoothInterface);
 	}
 
 	private IWarningManager createWarningManager() {
@@ -110,20 +135,7 @@ public class AutoMateNode {
 	}
 
 	private IAuthenticationManager createAuthenticationManager() {
-		long nodeId = -1;
-		String password = null;
-		File credentialsFile = new File("resources/credentials.properties");
-		if(credentialsFile.exists()) {
-			Properties credentials = new Properties();
-			try {
-				credentials.load(new FileInputStream(credentialsFile));
-				nodeId = Long.parseLong(credentials.getProperty("credentials.nodeId"));
-				password = credentials.getProperty("credentials.password");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		return new AuthenticationManager(managers.messageManager, managers.connectionManager, nodeId, password);
+		return new AuthenticationManager(managers.messageManager, managers.connectionManager);
 	}
 
 	private IMessageManager createMessageManager() {

@@ -1,8 +1,6 @@
 package com.automate.node.managers.authentication;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -35,13 +33,11 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	private long nodeId;
 	private String password;
 
-	public AuthenticationManager(IMessageManager messageManager, IConnectionManager connectionManager, long nodeId, String password) {
+	public AuthenticationManager(IMessageManager messageManager, IConnectionManager connectionManager) {
 		super(AuthenticationListener.class);
 		this.messageManager = messageManager;
 		this.connectionManager = connectionManager;
 		this.messageHandler = new AuthenticationMessageHandler(this);
-		this.nodeId = nodeId;
-		this.password = password;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +71,7 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	// Inherited from ConnectionManager
+	// Inherited from ConnectionListener
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@Override
@@ -92,14 +88,39 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
+	// Inherited from DiscoveryListener
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	@Override
+	public void onBroadcastSent() {}
+	@Override
+	public void onPairRequest() {}
+	@Override
+	public void onDeviceInformationSent() {}
+	@Override
+	public void onPairFailed() {}
+
+	@Override
+	public void onWifiCredsProvided(String ssid, String username, String passphrase) {
+		try {
+			Runtime.getRuntime().exec("sudo ./scripts/wifi-connect.sh");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void onPairSuccess(long nodeId, String password) {
+		signIn(nodeId, password);
+	}
+	
+	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// Inherited from AuthenticationManager
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@Override
 	public void onAuthenticating(long nodeId, String password) {
 		this.state = AuthenticatedState.AUTHENTICATING;
-		this.nodeId = nodeId;
-		this.password = password;
 		synchronized (mListeners) {
 			for(AuthenticationListener listener : mListeners) {
 				try {
@@ -132,7 +153,6 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	@Override
 	public void onAuthenticated(long nodeId, String password, String sessionKey) {
 		this.state = AuthenticatedState.AUTHENTICATED;
-		writeCredentials(nodeId, password);
 		synchronized (mListeners) {
 			for(AuthenticationListener listener : mListeners) {
 				try {
@@ -201,9 +221,6 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	protected void setupInitialState() {
 		this.timer = new Timer("Reconnect timer");
 		this.state = AuthenticatedState.NOT_AUTHENTICATED;
-		if(password != null) {
-			signIn(nodeId, password);
-		}
 	}
 
 	@Override
@@ -233,19 +250,6 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// private utility methods
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-
-	private void writeCredentials(long nodeId, String password) {
-		try {
-			File outfile = new File("resources/credentials.properties");
-			PrintWriter writer = new PrintWriter(outfile);
-			writer.println("credentials.nodeId=" + nodeId);
-			writer.println("credentials.password=" + password);
-			writer.close();
-		} catch (IOException e) {
-			System.out.println("Error writing credentials to disk.");
-		}
-
-	}
 
 	private void scheduleReconnect() {
 		timer.schedule(new TimerTask() {
