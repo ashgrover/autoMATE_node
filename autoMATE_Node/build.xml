@@ -21,7 +21,7 @@
 		</copy>
 		<jar jarfile="${dist}/${app.name}.jar" basedir="${build}">
 		    <restrict>
-		    	<name name="**/*.*"/>
+		    	<name name="*"/>
 		    	<archives>
 		    		<zips>
 		        		<fileset dir="lib/" includes="*.jar"/>

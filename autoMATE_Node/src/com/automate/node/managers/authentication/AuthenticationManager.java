@@ -8,6 +8,7 @@ import com.automate.node.managers.IListener;
 import com.automate.node.managers.ManagerBase;
 import com.automate.node.managers.connection.ConnectionListener;
 import com.automate.node.managers.connection.IConnectionManager;
+import com.automate.node.managers.discovery.IDiscoveryManager;
 import com.automate.node.managers.message.IMessageManager;
 import com.automate.protocol.Message;
 import com.automate.protocol.client.ClientProtocolParameters;
@@ -27,17 +28,19 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 
 	private IMessageManager messageManager;
 	private IConnectionManager connectionManager;
+	private IDiscoveryManager discoveryManager;
 	private AuthenticationMessageHandler messageHandler;
 	private Timer timer;
 	private boolean reconnect;
 	private long nodeId;
 	private String password;
 
-	public AuthenticationManager(IMessageManager messageManager, IConnectionManager connectionManager) {
+	public AuthenticationManager(IMessageManager messageManager, IConnectionManager connectionManager, IDiscoveryManager discoveryManager) {
 		super(AuthenticationListener.class);
 		this.messageManager = messageManager;
 		this.connectionManager = connectionManager;
 		this.messageHandler = new AuthenticationMessageHandler(this);
+		this.discoveryManager = discoveryManager;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -188,6 +191,8 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 
 	@Override
 	public boolean signIn(long nodeId, String password) {
+		this.nodeId = nodeId;
+		this.password = password;
 		ClientAuthenticationMessage message = new ClientAuthenticationMessage(messageManager.getProtocolParameters(), "$" + String.valueOf(nodeId), password);
 		this.reconnect = true;
 		messageManager.sendMessage(message);
@@ -209,12 +214,14 @@ public class AuthenticationManager extends ManagerBase<AuthenticationListener> i
 	protected void unbindSelf() {
 		this.messageManager.unbind(this);
 		this.connectionManager.unbind(this);
+		this.discoveryManager.unbind(this);
 	}
 
 	@Override
 	protected void bindSelf() {
 		this.messageManager.bind(this);
 		this.connectionManager.bind(this);
+		this.discoveryManager.bind(this);
 	}
 
 	@Override

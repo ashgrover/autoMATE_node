@@ -17,10 +17,13 @@ public class BluetoothInterfaceImpl implements BluetoothInterface {
 	@Override
 	public void turnOnBluetooth(DiscoveryListener callback) {
 		StreamConnectionNotifier service = null;
+		LocalDevice local = null;
 		try {
-			String url = "btspp://localhost:" + 
-					new UUID(0x1101).toString() +
-					";name=autoMATE-bluetooth-service";
+			local = LocalDevice.getLocalDevice();
+			local.setDiscoverable(DiscoveryAgent.GIAC);
+			UUID uuid = new UUID("04c6093b00001000800000805f9b34fb", false);
+			
+			String url = "btspp://localhost:" + uuid.toString() + ";name=autoMATE-bluetooth-service";
 			LocalDevice.getLocalDevice().setDiscoverable(DiscoveryAgent.GIAC);
 			service = (StreamConnectionNotifier) Connector.open(url);
 			this.communicationThread = new BluetoothCommunicationThread(service, callback);

@@ -8,8 +8,7 @@ import com.automate.node.bluetooth.BluetoothInterface;
 import com.automate.node.managers.IListener;
 import com.automate.node.managers.ManagerBase;
 
-public class DiscoveryManager extends ManagerBase<DiscoveryListener> implements
-IDiscoveryManager {
+public class DiscoveryManager extends ManagerBase<DiscoveryListener> implements IDiscoveryManager {
 
 	private long nodeId;
 	private String password;
@@ -36,6 +35,7 @@ IDiscoveryManager {
 				}
 			}
 		}
+		System.out.println("onBroadcastSent");
 	}
 
 	@Override
@@ -49,6 +49,7 @@ IDiscoveryManager {
 				}
 			}
 		}
+		System.out.println("onPairRequest");
 	}
 
 	@Override
@@ -62,6 +63,7 @@ IDiscoveryManager {
 				}
 			}
 		}
+		System.out.println("onDeviceInformationSent");
 	}
 
 	@Override
@@ -75,6 +77,7 @@ IDiscoveryManager {
 				}
 			}
 		}
+		System.out.println("onPairFailed");
 	}
 	
 	/* (non-Javadoc)
@@ -95,6 +98,7 @@ IDiscoveryManager {
 				}
 			}
 		}
+		System.out.println("onWifiCredsProvided");
 	}
 
 	@Override
@@ -110,6 +114,7 @@ IDiscoveryManager {
 				}
 			}
 		}
+		System.out.println("onPairSuccess");
 	}
 
 	@Override
@@ -156,6 +161,21 @@ IDiscoveryManager {
 			writer.println("wifi.SSID=" + ssid);
 			writer.println("wifi.username=" + username);
 			writer.println("wifi.passphrase=" + passphrase);
+			writer.close();
+			outfile = new File("scripts/wpa.conf");
+			writer = new PrintWriter(outfile);
+			writer.println("ctrl_interface=/var/run/wpa_supplicant");
+			writer.println("ctrl_interface_group=root");
+			writer.println("");
+			writer.println("network={");
+			writer.println("	ssid=\"" + ssid + "\"");
+			writer.println("	key_mgmt=WPA-EAP");
+			writer.println("	identity=\"" + username + "\"");
+			writer.println("	password=\"" + passphrase + "\"");
+			writer.println("	pairwise=TKIP CCMP");
+			writer.println("	auth_alg=OPEN");
+			writer.println("}");
+			writer.println("");
 			writer.close();
 		} catch (IOException e) {
 			System.out.println("Error writing wifi credentials to disk.");

@@ -1,6 +1,7 @@
 package com.automate.node.bluetooth;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -13,15 +14,14 @@ public class BluetoothCommunicationThread extends Thread {
 
 	private StreamConnectionNotifier service;
 
-	private ExecutorService processThread;
-
 	private boolean cancelled;
 
 	private DiscoveryListener callback;
+
+	private StreamConnection connection;
 	
 	public BluetoothCommunicationThread(StreamConnectionNotifier service, DiscoveryListener callback) {
 		this.service = service;
-		processThread = Executors.newSingleThreadExecutor();
 		this.callback = callback;
 	}
 
@@ -32,8 +32,11 @@ public class BluetoothCommunicationThread extends Thread {
 	public void run() {
 		while(!cancelled) {
 			try {
-				StreamConnection connection = service.acceptAndOpen();
-				processThread.submit(new BluetoothProtocolHandler(connection, callback));
+				System.out.println("acceptAndOpen");
+				connection = service.acceptAndOpen();
+				new BluetoothProtocolHandler(connection, callback).run();
+			} catch (InterruptedIOException e) {
+				break;
 			} catch (IOException e) {
 				System.err.println("Error in bluetooth thread.");
 				e.printStackTrace();
@@ -45,7 +48,8 @@ public class BluetoothCommunicationThread extends Thread {
 		this.cancelled = true;
 		try {
 			service.close();
-		} catch (IOException e) {}
+			connection.close();
+		} catch (Exception e) {}
 	}
 	
 }

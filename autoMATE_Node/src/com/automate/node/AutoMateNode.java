@@ -135,7 +135,7 @@ public class AutoMateNode {
 	}
 
 	private IAuthenticationManager createAuthenticationManager() {
-		return new AuthenticationManager(managers.messageManager, managers.connectionManager);
+		return new AuthenticationManager(managers.messageManager, managers.connectionManager, managers.discoveryManager);
 	}
 
 	private IMessageManager createMessageManager() {
